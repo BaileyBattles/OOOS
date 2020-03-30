@@ -6,8 +6,7 @@ int atoi(char *buffer){
 }
 
 //TODO: Reimplement when I have malloc
-char* itoa(int num){
-    char *buffer = (char *)0x8ffc4;
+char* itoa(int num, char* buffer){
     if (num == 0) {
         buffer[0] = 0x30;
         buffer[1] = '\0';
