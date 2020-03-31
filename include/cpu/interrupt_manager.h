@@ -19,7 +19,7 @@ public:
    void registerHandler(int num, InterruptHandler handler);
 private:
    void setupIdtGates();
-   void remapPIC();
+   void remapPIC(u8 offset1, u8 offset2);
    void setupIrqGates();
    void enableHardwareInterrupts();
 

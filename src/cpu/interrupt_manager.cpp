@@ -1,16 +1,19 @@
-#include "cpu/interruptmanager.h"
+#include "cpu/interrupt_constants.h"
+#include "cpu/interrupt_manager.h"
 #include "cpu/idt.h"
 #include "drivers/screen.h"
+#include "sys/io.h"
 #include "util/string.h"
 #include "util/memcpy.h"
-#include "sys/io.h"
 
 
-
+///////////////////////
+// Interrupt Manager //
+///////////////////////
 
 InterruptManager::InterruptManager() {
     setupIdtGates();
-    remapPIC();
+    remapPIC(0x20, 0x28);
     setupIrqGates();
     enableHardwareInterrupts();
 }
@@ -50,17 +53,23 @@ void InterruptManager::setupIdtGates() {
     set_idt_gate(31, (u32)isr31);
 }
 
-void InterruptManager::remapPIC(){
-    outb(0x20, 0x11);
-    outb(0xA0, 0x11);
-    outb(0x21, 0x20);
-    outb(0xA1, 0x28);
-    outb(0x21, 0x04);
-    outb(0xA1, 0x02);
-    outb(0x21, 0x01);
-    outb(0xA1, 0x01);
-    outb(0x21, 0x0);
-    outb(0xA1, 0x0); 
+void InterruptManager::remapPIC(u8 offset1, u8 offset2){
+    // Initialize
+    outb(MASTER_PIC_COMMAND, 0x11);
+    outb(SLAVE_PIC_COMMAND, 0x11);
+
+    //Set Offset
+    outb(MASTER_PIC_DATA, offset1);
+    outb(SLAVE_PIC_DATA, offset2);
+
+    outb(MASTER_PIC_DATA, 0x04);
+    outb(SLAVE_PIC_DATA, 0x02);
+    outb(MASTER_PIC_DATA, 0x01);
+    outb(SLAVE_PIC_DATA, 0x01);
+
+    //write masks
+    outb(MASTER_PIC_DATA, 0x01);
+    outb(SLAVE_PIC_DATA, 0x0); 
 }
 
 void InterruptManager::enableHardwareInterrupts(){
@@ -89,6 +98,10 @@ void InterruptManager::setupIrqGates(){
     set_idt();
 }
 
+/////////////////////////
+// Interrupt Handlers //
+////////////////////////
+
 extern "C" void isr_handler(registers_t r) {
     kprint("received interrupt: ");
     char s[3];
@@ -104,17 +117,18 @@ extern "C" void isr_handler(registers_t r) {
 extern "C" void irq_handler(registers_t r) {
     /* After every interrupt we need to send an EOI to the PICs
      * or they will not send another interrupt again */
-    if (r.int_no >= 40){
-        outb(0xA0, 0x20); 
-    }/* slave */
-    outb(0x20, 0x20); /* master */
-    if (r.int_no != 32){
-        kprint("Received IRQ");
-        char buff[3];
-        int_to_ascii(r.int_no, buff);
-        kprint(buff);
-        kprint("\n");
-    }
+    if (r.int_no >= 40)
+        outb(SLAVE_PIC_COMMAND, EOI_COMMAND); 
+    //}/* slave */
+    outb(MASTER_PIC_COMMAND, EOI_COMMAND); /* master */
+    inb(0x60);
+    kprint("Received IRQ");
+    char buff[3];
+    int_to_ascii(r.int_no, buff);
+    kprint(buff);
+    kprint("\n");
+
+
         
 
     /* Handle the interrupt in a more modular way */
