@@ -138,10 +138,6 @@ extern "C" void isr_handler(registers_t r) {
     kprint("\n");
 }
 
-// void register_interrupt_handler(u8 n, InterruptHandler handler) {
-//     interrupt_handlers[n] = handler;
-// }
-
 extern "C" void irq_handler(registers_t r) {
     /* After every interrupt we need to send an EOI to the PICs
      * or they will not send another interrupt again */

@@ -94,7 +94,6 @@ extern "C" void irq15();
 #define IRQ14 46
 #define IRQ15 47
 
-void isr_install();
 extern "C" void isr_handler(registers_t r);
 
 void register_interrupt_handler(u8 n, InterruptHandler handler);
