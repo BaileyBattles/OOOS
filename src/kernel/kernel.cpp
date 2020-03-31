@@ -1,15 +1,17 @@
 #include "drivers/screen.h"
-#include "sys/interrupt.h"
-#include "kernel/types.h"
-#include "util/atoi.h"
+#include "cpu/isr.h"
 
-
-extern "C" void kernelMain() {
-    clear_screen();
-    InterruptManager interruptManager;
-    asm volatile ("int $0x0");
-    while(true){
-    }
+void kernelLoop() {
+    while (true)
+    {}
 }
 
+
+extern "C" void main() {
+    InterruptManager interruptManager;
+    /* Test the interrupts */
+    __asm__ __volatile__("int $2");
+    __asm__ __volatile__("int $3");
+    kernelLoop();
+}
 

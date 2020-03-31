@@ -1,8 +1,8 @@
 #include "util/memcpy.h"
 
-int memcpy(void* from, void* to, int size){
-    for (int i = 0; i < size; i++){ 
-        *(char*)(to + i) = *(char*)(from + i);
+void memory_copy(char *source, char *dest, int nbytes) {
+    int i;
+    for (i = 0; i < nbytes; i++) {
+        *(dest + i) = *(source + i);
     }
-    return 0;
 }

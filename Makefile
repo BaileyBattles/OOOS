@@ -1,52 +1,50 @@
+C_SOURCES = $(wildcard src/kernel/*.cpp   \
+					   src/drivers/*.cpp  \
+					   src/cpu/*.cpp      \
+					   src/sys/*.cpp      \
+					   src/util/*.cpp     \
+					   )
+# Nice syntax for file extension replacement
+OBJ = ${C_SOURCES:.cpp=.o src/cpu/interrupt.o} 
 
-CXXFLAGS = -m32 -Wall -Iinclude -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wno-write-strings -nostdlib -g
-ASFLAGS = --32
-LDFLAGS = -melf_i386
-NASMFLAGS = -g
-LD = i686-elf-ld
-AS = i686-elf-as
-NASM = nasm
+# Change this if your cross-compiler is somewhere else
+CC = i686-elf-gcc
+GDB = gdb
+# -g: Use debugging symbols in gcc
+CFLAGS = -g -Iinclude
 
-GCC=i686-elf-gcc
-GDB=gdb
-objects = 	obj/loader.o \
-			obj/drivers/screen.o \
-			obj/kernel/kernel.o  \
-			obj/sys/interrupt.o \
-			obj/sys/interrupt_asm.o \
-			obj/sys/io.o \
-			obj/util/atoi.o \
-			obj/util/memcpy.o
- 
-default: kernel.bin
+# First rule is run by default
+os-image.bin: src/boot/bootsect.bin kernel.bin
+	cat $^ > os-image.bin
 
-run: kernel.bin
-	qemu-system-i386 -fda kernel.bin
+# '--oformat binary' deletes all symbols as a collateral, so we don't need
+# to 'strip' them manually on this case
+kernel.bin: src/boot/kernel_entry.o ${OBJ}
+	i686-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
 
-obj/%.o: src/%.cpp
-	mkdir -p $(@D)
-	$(GCC) $(CXXFLAGS) -c -o $@ $<
+# Used for debugging purposes
+kernel.elf: src/boot/kernel_entry.o ${OBJ}
+	i686-elf-ld -o $@ -Ttext 0x1000 $^ 
 
-obj/%.o: src/%.asm
-	mkdir -p $(@D)
-	$(NASM) $(NASMFLAGS) -f elf32 -g -F dwarf -o $@ $<
+run: os-image.bin
+	qemu-system-i386 -fda os-image.bin
 
-kernel.bin: linker.ld $(objects)
-	$(GCC) -T $< -o kernel.bin -ffreestanding -nostdlib $(objects)
-
-kernel.elf: debug_linker.ld $(objects)
-	$(GCC) -T $< -o kernel.elf -ffreestanding -nostdlib $(objects)
-
-clean:
-	-rm -rf obj iso kernel.iso kernel.elf kernel.bin isodir
-
-debug: kernel.bin kernel.elf
-	qemu-system-i386 -s -fda kernel.bin -S &
+# Open the connection to qemu and load our kernel-object file with symbols
+debug: os-image.bin kernel.elf
+	qemu-system-i386 -s -fda os-image.bin -d guest_errors,int &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
+# Generic rules for wildcards
+# To make an object, always compile from its .cpp
+%.o: %.cpp ${HEADERS}
+	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
 
-# kernel.iso: kernel.bin
-# 	mkdir -p isodir/boot/grub
-# 	cp kernel.bin isodir/boot/kernel.bin
-# 	cp grub.cfg isodir/boot/grub/grub.cfg
-# 	grub-mkrescue -o kernel.iso isodir
+%.o: %.asm
+	nasm $< -f elf -o $@
+
+%.bin: %.asm
+	nasm $< -f bin -o $@
+
+clean:
+	rm -rf *.bin *.dis *.o os-image.bin *.elf
+	rm -rf kernel/*.o src/boot/*.bin drivers/*.o src/boot/*.o cpu/*.o
