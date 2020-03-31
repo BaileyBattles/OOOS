@@ -1,5 +1,5 @@
 #include "drivers/screen.h"
-#include "cpu/isr.h"
+#include "cpu/interruptmanager.h"
 
 void kernelLoop() {
     while (true)

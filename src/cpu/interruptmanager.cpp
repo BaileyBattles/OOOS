@@ -1,11 +1,10 @@
-#include "cpu/isr.h"
+#include "cpu/interruptmanager.h"
 #include "cpu/idt.h"
 #include "drivers/screen.h"
 #include "util/string.h"
 #include "util/memcpy.h"
 #include "sys/io.h"
 
-isr_t interrupt_handlers[256];
 
 
 
@@ -87,7 +86,7 @@ void InterruptManager::setupIrqGates(){
     set_idt_gate(46, (u32)irq14);
     set_idt_gate(47, (u32)irq15);
 
-    set_idt(); // Load with ASM
+    set_idt();
 }
 
 extern "C" void isr_handler(registers_t r) {
@@ -98,19 +97,25 @@ extern "C" void isr_handler(registers_t r) {
     kprint("\n");
 }
 
-void register_interrupt_handler(u8 n, isr_t handler) {
-    interrupt_handlers[n] = handler;
-}
+// void register_interrupt_handler(u8 n, InterruptHandler handler) {
+//     interrupt_handlers[n] = handler;
+// }
 
 extern "C" void irq_handler(registers_t r) {
     /* After every interrupt we need to send an EOI to the PICs
      * or they will not send another interrupt again */
-    if (r.int_no >= 40) outb(0xA0, 0x20); /* slave */
+    if (r.int_no >= 40){
+        outb(0xA0, 0x20); 
+    }/* slave */
     outb(0x20, 0x20); /* master */
-    kprint("Received IRQ");
-    /* Handle the interrupt in a more modular way */
-    if (interrupt_handlers[r.int_no] != 0) {
-        isr_t handler = interrupt_handlers[r.int_no];
-        handler(r);
+    if (r.int_no != 32){
+        kprint("Received IRQ");
+        char buff[3];
+        int_to_ascii(r.int_no, buff);
+        kprint(buff);
+        kprint("\n");
     }
+        
+
+    /* Handle the interrupt in a more modular way */
 }

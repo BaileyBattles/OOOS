@@ -1,16 +1,29 @@
-#ifndef ISR_H
-#define ISR_H
+#ifndef __INTERRUPTMANAGER_H__
+#define __INTERRUPTMANAGER_H__
 
 #include "kernel/types.h"
+
+/* Struct which aggregates many registers */
+typedef struct {
+   u32 ds; /* Data segment selector */
+   u32 edi, esi, ebp, esp, ebx, edx, ecx, eax; /* Pushed by pusha. */
+   u32 int_no, err_code; /* Interrupt number and error code (if applicable) */
+   u32 eip, cs, eflags, useresp, ss; /* Pushed by the processor automatically */
+} registers_t;
+
+typedef void (*InterruptHandler)(registers_t);
 
 class InterruptManager{
 public:
    InterruptManager();
+   void registerHandler(int num, InterruptHandler handler);
 private:
    void setupIdtGates();
    void remapPIC();
    void setupIrqGates();
    void enableHardwareInterrupts();
+
+   InterruptHandler interrupt_handlers[256];
 };
 
 /* ISRs reserved for CPU exceptions */
@@ -81,18 +94,9 @@ extern "C" void irq15();
 #define IRQ14 46
 #define IRQ15 47
 
-/* Struct which aggregates many registers */
-typedef struct {
-   u32 ds; /* Data segment selector */
-   u32 edi, esi, ebp, esp, ebx, edx, ecx, eax; /* Pushed by pusha. */
-   u32 int_no, err_code; /* Interrupt number and error code (if applicable) */
-   u32 eip, cs, eflags, useresp, ss; /* Pushed by the processor automatically */
-} registers_t;
-
 void isr_install();
 extern "C" void isr_handler(registers_t r);
 
-typedef void (*isr_t)(registers_t);
-void register_interrupt_handler(u8 n, isr_t handler);
+void register_interrupt_handler(u8 n, InterruptHandler handler);
 
 #endif

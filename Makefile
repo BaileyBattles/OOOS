@@ -47,4 +47,10 @@ debug: os-image.bin kernel.elf
 
 clean:
 	rm -rf *.bin *.dis *.o os-image.bin *.elf
-	rm -rf kernel/*.o src/boot/*.bin drivers/*.o src/boot/*.o cpu/*.o
+	rm -rf src/kernel/*.o \
+		   src/boot/*.bin \
+		   src/drivers/*.o \
+		   src/boot/*.o \
+		   src/cpu/*.o \
+		   src/util/*.o \
+		   src/sys/*.o
