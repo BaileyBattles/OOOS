@@ -12,6 +12,8 @@ typedef struct {
 } registers_t;
 
 typedef void (*InterruptHandler)(registers_t);
+void registerHandler(InterruptHandler handler, int num);
+void handleInterrupt(registers_t r);
 
 class InterruptManager{
 public:
@@ -22,8 +24,6 @@ private:
    void remapPIC(u8 offset1, u8 offset2);
    void setupIrqGates();
    void enableHardwareInterrupts();
-
-   InterruptHandler interrupt_handlers[256];
 };
 
 /* ISRs reserved for CPU exceptions */

@@ -6,6 +6,8 @@
 #include "util/string.h"
 #include "util/memcpy.h"
 
+InterruptHandler interruptHandlers[256];
+
 
 ///////////////////////
 // Interrupt Manager //
@@ -98,9 +100,35 @@ void InterruptManager::setupIrqGates(){
     set_idt();
 }
 
-/////////////////////////
-// Interrupt Handlers //
-////////////////////////
+///////////////////////////////////
+// High Level Interrupt Handlers //
+///////////////////////////////////
+
+
+/*
+    These are used to interface with the global variable
+    interruptHandlers which is an array of function pointers
+*/
+
+void handleInterrupt(registers_t r){
+    if(interruptHandlers[0] != 0)
+        interruptHandlers[r.int_no](r);
+}
+
+// Interrupts should be registered to the value
+// returned in r.int_no
+void registerHandler(InterruptHandler handler, int num){
+    interruptHandlers[num] = handler;
+}
+
+
+//////////////////////////////////
+// Low Level Interrupt Handlers //
+/////////////////////////////////
+
+/*
+    These are called from the int stubs in assembly
+*/
 
 extern "C" void isr_handler(registers_t r) {
     kprint("received interrupt: ");
@@ -128,8 +156,8 @@ extern "C" void irq_handler(registers_t r) {
     kprint(buff);
     kprint("\n");
 
-
-        
-
-    /* Handle the interrupt in a more modular way */
+    //Call associated interrupt handler
+    handleInterrupt(r);
 }
+
+
