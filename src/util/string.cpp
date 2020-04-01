@@ -1,6 +1,6 @@
 #include "util/string.h"
 
-void int_to_ascii(int n, char str[]) {
+char *int_to_ascii(int n, char str[]) {
     int i, sign;
     if ((sign = n) < 0) n = -n;
     i = 0;
@@ -10,4 +10,5 @@ void int_to_ascii(int n, char str[]) {
 
     if (sign < 0) str[i++] = '-';
     str[i] = '\0';
+    return str;
 }

@@ -9,7 +9,6 @@
 
 Device *interruptHandlers[256];
 
-
 ///////////////////////
 // Interrupt Manager //
 ///////////////////////
