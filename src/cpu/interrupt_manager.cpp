@@ -1,12 +1,13 @@
 #include "cpu/interrupt_constants.h"
 #include "cpu/interrupt_manager.h"
 #include "cpu/idt.h"
+#include "drivers/device.h"
 #include "drivers/screen.h"
 #include "sys/io.h"
 #include "util/string.h"
 #include "util/memcpy.h"
 
-InterruptHandler interruptHandlers[256];
+Device *interruptHandlers[256];
 
 
 ///////////////////////
@@ -111,13 +112,13 @@ void InterruptManager::setupIrqGates(){
 */
 
 void handleInterrupt(registers_t r){
-    if(interruptHandlers[0] != 0)
-        interruptHandlers[r.int_no](r);
+    if(interruptHandlers[r.int_no] != 0)
+        interruptHandlers[r.int_no]->handleInterrupt(r);
 }
 
 // Interrupts should be registered to the value
 // returned in r.int_no
-void registerHandler(InterruptHandler handler, int num){
+void registerHandler(Device *handler, int num){
     interruptHandlers[num] = handler;
 }
 
@@ -145,7 +146,6 @@ extern "C" void irq_handler(registers_t r) {
         outb(SLAVE_PIC_COMMAND, EOI_COMMAND); 
     //}/* slave */
     outb(MASTER_PIC_COMMAND, EOI_COMMAND); /* master */
-    inb(0x60);
     kprint("Received IRQ");
     char buff[3];
     int_to_ascii(r.int_no, buff);

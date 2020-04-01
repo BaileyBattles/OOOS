@@ -11,7 +11,7 @@ OBJ = ${C_SOURCES:.cpp=.o src/cpu/interrupt.o}
 CC = i686-elf-gcc
 GDB = gdb
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -Iinclude
+CFLAGS = -g -Iinclude -fno-rtti
 
 # First rule is run by default
 os-image.bin: src/boot/bootsect.bin kernel.bin

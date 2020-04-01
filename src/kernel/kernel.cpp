@@ -1,5 +1,6 @@
-#include "drivers/screen.h"
 #include "cpu/interrupt_manager.h"
+#include "drivers/keyboard.h"
+#include "drivers/screen.h"
 
 void kernelLoop() {
     while (true)
@@ -9,6 +10,9 @@ void kernelLoop() {
 
 extern "C" void main() {
     InterruptManager interruptManager;
+    Keyboard keyboard;
+    keyboard.initialize();
+    registerHandler(&keyboard, 33);
     /* Test the interrupts */
     __asm__ __volatile__("int $2");
     __asm__ __volatile__("int $3");

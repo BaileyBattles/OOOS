@@ -3,6 +3,8 @@
 
 #include "kernel/types.h"
 
+class Device;
+
 /* Struct which aggregates many registers */
 typedef struct {
    u32 ds; /* Data segment selector */
@@ -12,7 +14,7 @@ typedef struct {
 } registers_t;
 
 typedef void (*InterruptHandler)(registers_t);
-void registerHandler(InterruptHandler handler, int num);
+void registerHandler(Device *handler, int num);
 void handleInterrupt(registers_t r);
 
 class InterruptManager{
@@ -95,7 +97,7 @@ extern "C" void irq15();
 #define IRQ15 47
 
 extern "C" void isr_handler(registers_t r);
+extern "C" void irq_handler(registers_t r);
 
-void register_interrupt_handler(u8 n, InterruptHandler handler);
 
 #endif
