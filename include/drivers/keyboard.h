@@ -6,8 +6,12 @@
 
 class Keyboard : public Device {
 public:
+    Keyboard();
     void initialize();
     void handleInterrupt(registers_t r);
+private:
+    char translateInput(u8 input);
+    bool shiftDown;
 };
 
 #endif
