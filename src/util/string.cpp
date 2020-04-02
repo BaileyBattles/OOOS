@@ -1,14 +1,23 @@
 #include "util/string.h"
 
-char *int_to_ascii(int n, char str[]) {
-    int i, sign;
-    if ((sign = n) < 0) n = -n;
-    i = 0;
-    do {
-        str[i++] = n % 10 + '0';
-    } while ((n /= 10) > 0);
-
-    if (sign < 0) str[i++] = '-';
-    str[i] = '\0';
-    return str;
+char *int_to_ascii(int num, char buffer[]) {
+    if (num == 0) {
+        buffer[0] = 0x30;
+        buffer[1] = '\0';
+        return buffer;
+    }
+    int len = 0;
+    while (num > 0){
+        buffer[len] = 0x30 + num % 10;
+        len++;
+        num /= 10;
+    }
+    int i;
+    for (i = 0; i < len / 2; i++) {
+        char temp = buffer[i];
+        buffer[i] = buffer[len - i - 1];
+        buffer[len - i - 1] = temp;
+    }
+    buffer[len] = '\0';
+    return buffer;
 }
