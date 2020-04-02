@@ -9,6 +9,7 @@ void kernelLoop() {
 
 
 extern "C" void main() {
+    clear_screen();
     InterruptManager interruptManager;
     Keyboard keyboard;
     keyboard.initialize();
