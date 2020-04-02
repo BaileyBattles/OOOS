@@ -145,11 +145,11 @@ extern "C" void irq_handler(registers_t r) {
         outb(SLAVE_PIC_COMMAND, EOI_COMMAND); 
     //}/* slave */
     outb(MASTER_PIC_COMMAND, EOI_COMMAND); /* master */
-    kprint("Received IRQ");
-    char buff[3];
-    int_to_ascii(r.int_no, buff);
-    kprint(buff);
-    kprint("\n");
+    // kprint("Received IRQ");
+    // char buff[3];
+    // int_to_ascii(r.int_no, buff);
+    // kprint(buff);
+    // kprint("\n");
 
     //Call associated interrupt handler
     handleInterrupt(r);
