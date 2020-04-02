@@ -11,6 +11,7 @@ public:
     void handleInterrupt(registers_t r);
 private:
     char translateInput(u8 input);
+    char accountForShift(char input);
     bool shiftDown;
 };
 

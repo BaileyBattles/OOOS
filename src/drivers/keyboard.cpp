@@ -11,61 +11,88 @@ Keyboard::Keyboard()
 void Keyboard::initialize()
 {}
 
+char Keyboard::accountForShift(char input) {
+    if (shiftDown)
+        return input - 32;
+    return input;
+}
+
 char Keyboard::translateInput(u8 input) {
     switch (input)
     {
     //Shift
     case 42:
         shiftDown = true;
-        break;
+        return '\0';
     case 170:
         shiftDown = false;
-        break;
+        return '\0';
+    
+    //Tab
+    case 15:
+        return '\t';
+    
+    //Enter
+    case 28:
+        return '\n';
 
     //Top Row
     case 16:
-        if (shiftDown)
-            return 'Q';
-        else
-            return 'q';
+        return accountForShift('q');
     case 17:
-        return 'w';
+        return accountForShift('w');
     case 18:
-        return 'e';
+        return accountForShift('e');
     case 19:
-        return 'r';
+        return accountForShift('r');
     case 20:
-        return 't';
+        return accountForShift('t');
     case 21:
-        return 'y';
+        return accountForShift('y');
     case 22:
-        return 'u';
+        return accountForShift('u');
     case 23:
-        return 'i';
+        return accountForShift('i');
     case 24:
-        return 'o';
+        return accountForShift('o');
     case 25:
-        return 'p';
+        return accountForShift('p');
 
     //Second Row
     case 30:
-        return 'a';
+        return accountForShift('a');
     case 31:
-        return 's';
+        return accountForShift('s');
     case 32:
-        return 'd';
+        return accountForShift('d');
     case 33:
-        return 'f';
+        return accountForShift('f');
     case 34:
-        return 'g';
+        return accountForShift('g');
     case 35:
-        return 'h';
+        return accountForShift('h');
     case 36:
-        return 'j';
+        return accountForShift('j');
     case 37:
-        return 'k';
+        return accountForShift('k');
     case 38:
-        return 'l';
+        return accountForShift('l');
+    
+    //Third Row
+    case 44:
+        return accountForShift('z');
+    case 45:
+        return accountForShift('x');
+    case 46:
+        return accountForShift('c');
+    case 47:
+        return accountForShift('v');
+    case 48:
+        return accountForShift('b');
+    case 49:
+        return accountForShift('n');
+    case 50:
+        return accountForShift('m');
 
     //Invalid key or key that should not output anything like shift
     default:
@@ -77,17 +104,8 @@ void Keyboard::handleInterrupt(registers_t r)
 {
     u8 c = inb(0x60);
     char c1 = translateInput(c);
-    if (c1 == '\0'){
-        char buff[5]; 
-        kprint(int_to_ascii(c, buff));
-        kprint("\n");
-    }
-    else {
-        char buff[2];
-        buff[0] = c1;
-        buff[1] = '\0';
-        kprint(buff);
-        kprint("\n");
-    }
-    
+    char buff[2];
+    buff[0] = c1;
+    buff[1] = '\0';
+    kprint(buff);
 }
