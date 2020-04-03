@@ -1,6 +1,7 @@
 #include "cpu/interrupt_manager.h"
 #include "drivers/keyboard.h"
 #include "drivers/screen.h"
+#include "util/string.h"
 
 void kernelLoop() {
     while (true)
@@ -8,8 +9,11 @@ void kernelLoop() {
 }
 
 
-extern "C" void main() {
+extern "C" void main(void *stackBase) {
     clear_screen();
+    extern int stack_ptr;
+    char buffer[10];
+    kprint(int_to_ascii((int)stackBase, buffer));
     InterruptManager interruptManager;
     Keyboard keyboard;
     keyboard.initialize();

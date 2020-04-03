@@ -18,12 +18,13 @@ MultiBootHeader:
 
 section .text
 
-STACKSIZE equ 0x4000
+STACKSIZE equ 0x5000
 
 loader:
   mov esp, stack+STACKSIZE
-  push eax
-  push ebx
+  mov ebx, esp
+  push eax ; argument 1 to main
+  push ebx ; argument 2 to main
 
   call main
 
