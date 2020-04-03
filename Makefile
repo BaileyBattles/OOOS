@@ -5,7 +5,8 @@ C_SOURCES = $(wildcard src/kernel/*.cpp   \
 					   src/util/*.cpp     \
 					   )
 # Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.cpp=.o src/cpu/interrupt.o} 
+OBJ = ${C_SOURCES:.cpp=.o    \
+        src/cpu/interrupt.o} 
 
 # Change this if your cross-compiler is somewhere else
 CC = i686-elf-gcc
