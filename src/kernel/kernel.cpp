@@ -3,17 +3,20 @@
 #include "drivers/screen.h"
 #include "util/string.h"
 
+extern unsigned long ebss;
+
 void kernelLoop() {
     while (true)
     {}
 }
 
 
-extern "C" void main(void *stackBase) {
+extern "C" void main(void *stackBase, u32 addr1) {
     clear_screen();
     extern int stack_ptr;
     char buffer[10];
-    kprint(int_to_ascii((int)stackBase, buffer));
+    void *endOfBss = &ebss;
+    kprint(int_to_ascii((int)endOfBss, buffer));
     InterruptManager interruptManager;
     Keyboard keyboard;
     keyboard.initialize();
