@@ -1,52 +1,104 @@
-; Identical to lesson 13's boot sector, but the %included files have new paths
+
 [org 0x7c00]
-KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
+[bits 16]
 
-    mov [BOOT_DRIVE], dl ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-    mov bp, 0x9000
-    mov sp, bp
+boot:
+    push cs
+    pop ds
+    xor bx, bx
+    mov ah, 0x0e
+    mov si, message
+    lodsb
+.lewp:
+    int 0x10
+    lodsb
+    cmp al, 0
+    jne .lewp
 
-    mov bx, MSG_REAL_MODE 
-    call print
-    call print_nl
+    mov bx, 0x1000
+    mov es, bx
+    xor bx, bx              ; Load kernel @ 0x10000
 
-    call load_kernel ; read the kernel from disk
-    call switch_to_pm ; disable interrupts, load GDT,  etc. Finally jumps to 'BEGIN_PM'
-    jmp $ ; Never executed
+    mov ah, 0x02            ; cmd 0x02 - Read Disk Sectors
+    mov al, 72              ; 72 sectors (max allowed by bochs BIOS)
+    mov ch, 0               ; track 0
+    mov cl, 10              ; sector 10
+    mov dh, 0               ; head 0
+    mov dl, 0               ; drive 0 (fd0)
+    int 0x13
+    jc fug
 
-%include "src/boot/print.asm"
-%include "src/boot/print_hex.asm"
-%include "src/boot/disk.asm"
-%include "src/boot/gdt.asm"
-%include "src/boot/32bit_print.asm"
-%include "src/boot/switch_pm.asm"
+    mov ah, 0x02
+    mov al, 32
+    add bx, 0x9000
+    mov ch, 2
+    mov cl, 10
+    mov dh, 0
+    mov dl, 0
+    int 0x13
+
+    jc fug
+
+    lgdt [cs:test_gdt_ptr]
+
+    mov eax, cr0
+    or al, 1
+    mov cr0, eax
+
+    jmp 0x08:pmode
+
+pmode:
+[bits 32]
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    mov ss, ax
+    mov esp, 0x2000
+
+    jmp 0x10000
+
+    hlt
+
+test_gdt_ptr:
+    dw (test_gdt_end-test_gdt)
+    dd test_gdt
+
+test_gdt:
+    dd 0
+    dd 0
+    dd 0x0000ffff
+    dd 0x00cf9a00
+    dd 0x0000ffff
+    dd 0x00cf9200
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+test_gdt_end:
 
 [bits 16]
-load_kernel:
-    mov bx, MSG_LOAD_KERNEL
-    call print
-    call print_nl
+fug:
+    xor bx, bx
+    mov ah, 0x0e
+    mov si, fug_message
+    lodsb
+.lewp:
+    int 0x10
+    lodsb
+    cmp al, 0
+    jne .lewp
 
-    mov bx, KERNEL_OFFSET ; Read from disk and store in 0x1000
-    mov dh, 31 ; Our future kernel will be larger, make this big
-    mov dl, [BOOT_DRIVE]
-    call disk_load
-    ret
+    cli
+    hlt
+    
+message:
+    db "boot!", 0x0d, 0x0a, 0
 
-[bits 32]
-BEGIN_PM:
-    mov ebx, MSG_PROT_MODE
-    call print_string_pm
-    call KERNEL_OFFSET ; Give control to the kernel
-    jmp $ ; Stay here when the kernel returns control to us (if ever)
+fug_message:
+    db "FUG!", 0x0d, 0x0a, 0
 
-
-BOOT_DRIVE db 0 ; It is a good idea to store it in memory because 'dl' may get overwritten
-MSG_REAL_MODE db "Started in 16-bit Real Mode", 0
-MSG_PROT_MODE db "Landed in 32-bit Protected Mode", 0
-MSG_LOAD_KERNEL db "Loading kernel into memory", 0
-MSG_RETURNED_KERNEL db "Returned from kernel. Error?", 0
-
-; padding
-times 510 - ($-$$) db 0
+times 510-($-$$) db 0
 dw 0xaa55
