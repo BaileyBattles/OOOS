@@ -35,6 +35,9 @@ char Keyboard::translateInput(u8 input) {
     //Enter
     case 28:
         return '\n';
+    
+    case 57:
+        return ' ';
 
     //Top Row
     case 16:
