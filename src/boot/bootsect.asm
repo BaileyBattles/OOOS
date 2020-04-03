@@ -1,10 +1,9 @@
 ; Identical to lesson 13's boot sector, but the %included files have new paths
 [org 0x7c00]
-KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
+KERNEL_OFFSET equ 0x7E00 ; The same one we used when linking the kernel
+STACK_BASE equ 0x1A0000
 
     mov [BOOT_DRIVE], dl ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-    mov bp, 0x9000
-    mov sp, bp
 
     mov bx, MSG_REAL_MODE 
     call print
@@ -37,6 +36,10 @@ load_kernel:
 BEGIN_PM:
     mov ebx, MSG_PROT_MODE
     call print_string_pm
+
+    mov ebp, STACK_BASE
+    mov esp, ebp
+
     call KERNEL_OFFSET ; Give control to the kernel
     jmp $ ; Stay here when the kernel returns control to us (if ever)
 

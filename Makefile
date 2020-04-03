@@ -20,11 +20,11 @@ os-image.bin: src/boot/bootsect.bin kernel.bin
 # '--oformat binary' deletes all symbols as a collateral, so we don't need
 # to 'strip' them manually on this case
 kernel.bin: src/boot/kernel_entry.o ${OBJ}
-	i686-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
+	i686-elf-ld -o $@ -Ttext 0x7E00 $^ --oformat binary
 
 # Used for debugging purposes
 kernel.elf: src/boot/kernel_entry.o ${OBJ}
-	i686-elf-ld -o $@ -Ttext 0x1000 $^ 
+	i686-elf-ld -o $@ -Ttext 0x7E00 $^ 
 
 run: os-image.bin
 	qemu-system-i386 -fda os-image.bin
