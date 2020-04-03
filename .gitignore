@@ -1,3 +1,4 @@
 *.bin
 *.elf
+iso/
 src/*/*.o
