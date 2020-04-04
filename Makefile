@@ -3,6 +3,7 @@ C_SOURCES = $(wildcard src/kernel/*.cpp   \
 					   src/cpu/*.cpp      \
 					   src/sys/*.cpp      \
 					   src/util/*.cpp     \
+					   src/memory/*.cpp   \
 					   )
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.cpp=.o    \
