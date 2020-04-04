@@ -9,7 +9,10 @@ Keyboard::Keyboard()
 }
 
 void Keyboard::initialize()
-{}
+{
+    registerHandler(this, 33);
+
+}
 
 char Keyboard::accountForShift(char input) {
     if (shiftDown)
