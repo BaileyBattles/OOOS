@@ -16,4 +16,6 @@ typedef          char  s8;
 #define KB 1024
 #define MB 1048576
 
+#define NULL 0
+
 #endif
