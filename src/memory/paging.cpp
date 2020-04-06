@@ -4,6 +4,7 @@
 ////////////////////
 // PageTableEntry //
 ////////////////////
+
 PageTableEntry::PageTableEntry()
 {}
 
@@ -46,6 +47,10 @@ void PageTableEntry::setBaseAddress(u32 baseAddress){
 
 void PageTableEntry::setPresent() {
     data |= 0x1;
+}
+
+u32 PageTableEntry::getData() {
+    return data;
 }
 
 
@@ -92,13 +97,13 @@ u32 PageDirectoryEntry::baseAddress(){
     return frameAddress() * PAGE_SIZE;
 }
 
-void PageTableManager::initialize() {
-    initialize_cr0();
-}
-
 ///////////////
 // PageTable //
 ///////////////
+
+PageTable::PageTable(u32 *pageTableAddress) {
+    pageTable = pageTableAddress;
+}
 
 //Create a whole table of continuous mapping
 void PageTable::createContinuousMapping(u32 physicalStart, u32 virtualStart) {
@@ -107,8 +112,13 @@ void PageTable::createContinuousMapping(u32 physicalStart, u32 virtualStart) {
         pte.setBaseAddress(physicalStart + i * PAGE_SIZE);
         pte.setPresent();
         u32 index = getIndex(virtualStart + i * PAGE_SIZE);
-        entries[index] = pte;
+        installEntry(index, pte);
     }
+}
+
+void PageTable::installEntry(u32 index, PageTableEntry pte){
+    entries[index] = pte;
+    pageTable[index] = pte.getData();
 }
 
 u32 PageTable::getIndex(u32 virtualAddress) {
@@ -127,6 +137,13 @@ u32 PageDirectory::getIndex(u32 virtualAddress) {
 //////////////////////
 // PageTableManager //
 //////////////////////
+
+void PageTableManager::initialize() {
+    // PageTable pageTable;
+    // for (int i = 0x0; i < TOTAL_MEMORY; i += 4*KB){
+    //     pageTable.createContinuousMapping(i, i);
+    // }
+}
 
 u32 PageTableManager::read_cr3()
 {
@@ -148,4 +165,3 @@ void PageTableManager::initialize_cr0(){
         "movl %%eax, %%cr0\n" ::
             : "%eax", "memory");
 }
-

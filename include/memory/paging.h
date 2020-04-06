@@ -3,6 +3,10 @@
 
 #include "kernel/types.h"
 
+//THIS IS TERRIBLE!!!!
+//Need to fix this with info from GRUB
+#define TOTAL_MEMORY 0x20000000
+
 #define PAGE_SIZE 4*KB
 #define NUM_PAGETABLE_ENTRIES 1024
 #define NUM_PAGEDIR_ENTRIES 1024
@@ -21,6 +25,8 @@ public:
 
     void setPresent();
     void setBaseAddress(u32 baseAddress);
+
+    u32 getData();
 private:
     u32 data;
 };
@@ -41,10 +47,15 @@ private:
 };
 
 class PageTable {
+public:
+    PageTable(u32 *pageTableAddress);
     void createContinuousMapping(u32 physicalStart, u32 virtualStart);
 private:
     u32 getIndex(u32 virtualAddress);
+    u32 *pageTable;
+
     PageTableEntry entries[NUM_PAGETABLE_ENTRIES];
+    void installEntry(u32 index, PageTableEntry pte);
 };
 
 class PageDirectory {

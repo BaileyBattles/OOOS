@@ -34,7 +34,7 @@ extern "C" void main(multiboot_header_t* multibootHeader) {
     char *buffer2 = (char*)KMM.kmalloc(32);
 
     PageTableManager PTM;
-    // PTM.initialize();
+    PTM.initialize();
     kernelLoop();
 
 }
