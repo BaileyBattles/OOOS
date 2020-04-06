@@ -35,14 +35,11 @@ Since each bit labels a byte of memory,
 check and see if that byte is free
 */
 bool KMemoryManager::byteFree(u32 index) {
-    for (int i = 0; i < bitmapLength; i++) {
-        int byte = index / 8;
-        int offset = index % 8;
-        int bit = (memoryMap[byte] >> (7 - offset)) & 0x1;
-        if (bit == 0)
-            return true;
-        return false;
-    }
+    int byte = index / 8;
+    int offset = index % 8;
+    int bit = (memoryMap[byte] >> (7 - offset)) & 0x1;
+    if (bit == 0)
+        return true;
     return false;
 }
 
@@ -68,11 +65,9 @@ u32 KMemoryManager::findNFree(int numBytes){
 }
 
 void KMemoryManager::setByteUsed(u32 index){
-    for (int i = 0; i < bitmapLength; i++) {
-        int byte = index / 8;
-        int offset = index % 8;
-        memoryMap[byte] = (memoryMap[byte] | 0x1 << (7 - offset));
-    }
+    int byte = index / 8;
+    int offset = index % 8;
+    memoryMap[byte] = (memoryMap[byte] | 0x1 << (7 - offset));
 }
 
 //Index is the bit number, i.e index of 2 is the third bit
