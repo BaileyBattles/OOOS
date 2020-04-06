@@ -10,16 +10,16 @@
 KMemoryManager::KMemoryManager(u32 address){
     pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
     kmallocStartAddress = pagemallocStartAddress + PAGE_MEMORY_SIZE;
-    memory_set((void*)memoryMap, 0, KERNEL_HEAP_SIZE / 8);
-    bitmapLength = KERNEL_HEAP_SIZE / 8;
+    memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
+    kmallocBitmapLength = KERNEL_HEAP_SIZE / 8;
 }
 
 void *KMemoryManager::kmalloc(int numBytes){
-    u32 startIndex = findNFree(numBytes);
+    u32 startIndex = findNFree(numBytes, kmallocMap, kmallocBitmapLength);
     if (startIndex == -1){
         return nullptr;
     }
-    setChunkUsed(startIndex, numBytes);
+    setChunkUsed(startIndex, numBytes, kmallocMap);
     return kmallocStartAddress + startIndex;
 }
 
@@ -34,10 +34,10 @@ void *KMemoryManager::calculateNextAllignedAddress(u32 address, u32 pageSize){
 Since each bit labels a byte of memory, 
 check and see if that byte is free
 */
-bool KMemoryManager::byteFree(u32 index) {
+bool KMemoryManager::indexFree(u32 index, u8 bitmap[]) {
     int byte = index / 8;
     int offset = index % 8;
-    int bit = (memoryMap[byte] >> (7 - offset)) & 0x1;
+    int bit = (bitmap[byte] >> (7 - offset)) & 0x1;
     if (bit == 0)
         return true;
     return false;
@@ -47,13 +47,13 @@ bool KMemoryManager::byteFree(u32 index) {
 Return the index of the chunk in kMemory with
 n free in a row
 */
-u32 KMemoryManager::findNFree(int numBytes){
+u32 KMemoryManager::findNFree(int numBytes, u8 bitmap[], int bitmapLength){
     u32 numInARow = 0;
     u32 start = 0;
     for (int i = 0; i < bitmapLength; i++){
         if (numInARow == numBytes)
             return start;
-        if (byteFree(i)){
+        if (indexFree(i, bitmap)){
             numInARow += 1;
         }
         else {
@@ -64,15 +64,15 @@ u32 KMemoryManager::findNFree(int numBytes){
     return -1;
 }
 
-void KMemoryManager::setByteUsed(u32 index){
+void KMemoryManager::setIndexUsed(u32 index, u8 bitmap[]){
     int byte = index / 8;
     int offset = index % 8;
-    memoryMap[byte] = (memoryMap[byte] | 0x1 << (7 - offset));
+    bitmap[byte] = (bitmap[byte] | 0x1 << (7 - offset));
 }
 
 //Index is the bit number, i.e index of 2 is the third bit
-void KMemoryManager::setChunkUsed(u32 index, int numBytes){
+void KMemoryManager::setChunkUsed(u32 index, int numBytes, u8 bitmap[]){
     for (int i = index; i < index + numBytes; i++){
-        setByteUsed(i);
+        setIndexUsed(i, bitmap);
     }
 }

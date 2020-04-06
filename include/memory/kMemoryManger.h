@@ -13,15 +13,20 @@ public:
     void *pagemalloc(); //allocate one page
 private:
     u32 baseAddress;
-    u8 memoryMap[KERNEL_HEAP_SIZE / 8];
-    int bitmapLength;
+    u8 kmallocMap[KERNEL_HEAP_SIZE / 8];
+    int kmallocBitmapLength;
     void *pagemallocStartAddress;
     void *kmallocStartAddress;
 
-    bool byteFree(u32 index);
-    u32 findNFree(int numBytes);
-    void setChunkUsed(u32 index, int numBytes);
-    void setByteUsed(u32 index);
+    //Bitmap Functions
+    //
+    //Can't make it it's own class since we would
+    //need to be able to allocate memory for that
+    bool indexFree(u32 index, u8 bitmap[]);
+    u32 findNFree(int numBytes, u8 bitmap[], int bitmapLength);
+    void setChunkUsed(u32 index, int numBytes, u8 bitmap[]);
+    void setIndexUsed(u32 index, u8 bitmap[]);
+    
     void *calculateNextAllignedAddress(u32 address, u32 pageSize);
 };
 
