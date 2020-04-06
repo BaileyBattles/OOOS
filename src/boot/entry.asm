@@ -4,9 +4,10 @@ global stack_ptr
 
 extern main
 
-MODULEALIGN equ 1<<0
-MEMINFO equ 1<<1
-FLAGS equ MODULEALIGN | MEMINFO
+MODULEALIGN equ 0x1
+MEMINFO     equ 0x2
+VIDINFO     equ 0x4
+FLAGS equ MODULEALIGN | MEMINFO | VIDINFO
 MAGIC equ 0x1BADB002
 CHECKSUM equ -(MAGIC + FLAGS)
 ZERO equ 0x00000000
@@ -27,12 +28,12 @@ BSS_END_ADR:
 
 section .text
 
-STACKSIZE equ 0x4000
+STACKSIZE equ 0x5000
 
 loader:
   mov esp, stack+STACKSIZE
-  push ebx ; argument 1 to main
   push eax ; argument 2 to main
+  push ebx ; argument 1 to main
 
   call main
 
