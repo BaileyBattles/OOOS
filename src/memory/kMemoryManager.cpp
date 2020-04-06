@@ -1,5 +1,6 @@
 #include "kernel/types.h"
 #include "memory/kMemoryManger.h"
+#include "memory/paging.h"
 #include "util/memcpy.h"
 
 ////////////////////
@@ -7,7 +8,8 @@
 ////////////////////
 
 KMemoryManager::KMemoryManager(u32 address){
-    startAddress = (void*)address;
+    pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
+    kmallocStartAddress = pagemallocStartAddress + PAGE_MEMORY_SIZE;
     memory_set((void*)memoryMap, 0, KERNEL_HEAP_SIZE / 8);
     bitmapLength = KERNEL_HEAP_SIZE / 8;
 }
@@ -15,10 +17,17 @@ KMemoryManager::KMemoryManager(u32 address){
 void *KMemoryManager::kmalloc(int numBytes){
     u32 startIndex = findNFree(numBytes);
     if (startIndex == -1){
-        return 0;
+        return nullptr;
     }
     setChunkUsed(startIndex, numBytes);
-    return startAddress + startIndex;
+    return kmallocStartAddress + startIndex;
+}
+
+void *KMemoryManager::calculateNextAllignedAddress(u32 address, u32 pageSize){
+    if ((pageSize - 1) & address){
+        return (void *)((address+pageSize) & ~(pageSize-1));
+    }
+    return (void *)address;
 }
 
 /*
