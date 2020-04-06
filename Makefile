@@ -53,6 +53,7 @@ debug: kernel.elf
 clean:
 	rm -rf *.bin *.dis *.o os-image.bin *.elf *.img
 	rm -rf src/kernel/*.o \
+		   src/memory/*.o \
 		   src/boot/*.bin \
 		   src/drivers/*.o \
 		   src/boot/*.o \

@@ -35,7 +35,6 @@ extern "C" void main(multiboot_header_t* multibootHeader) {
 
     PageTableManager PTM;
     // PTM.initialize();
-
     kernelLoop();
 
 }

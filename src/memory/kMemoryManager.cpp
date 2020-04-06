@@ -9,7 +9,10 @@
 
 KMemoryManager::KMemoryManager(u32 address){
     pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
-    kmallocStartAddress = pagemallocStartAddress + PAGE_MEMORY_SIZE;
+    memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
+    kmallocBitmapLength = NUM_PAGES / 8;
+
+    kmallocStartAddress = pagemallocStartAddress + NUM_PAGES*PAGE_SIZE;
     memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
     kmallocBitmapLength = KERNEL_HEAP_SIZE / 8;
 }

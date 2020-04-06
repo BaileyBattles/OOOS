@@ -2,8 +2,9 @@
 #define __ALLOCATE_H__
 
 #include "kernel/types.h"
+#include "memory/paging.h"
 
-#define PAGE_MEMORY_SIZE 32 * 1024
+#define NUM_PAGES 1025
 #define KERNEL_HEAP_SIZE 10*KB
 
 class KMemoryManager{
@@ -13,10 +14,14 @@ public:
     void *pagemalloc(); //allocate one page
 private:
     u32 baseAddress;
+
     u8 kmallocMap[KERNEL_HEAP_SIZE / 8];
     int kmallocBitmapLength;
-    void *pagemallocStartAddress;
     void *kmallocStartAddress;
+
+    u8 pagemallocMap[NUM_PAGES / 8];
+    int pagemallocBitmapLength;
+    void *pagemallocStartAddress;
 
     //Bitmap Functions
     //
