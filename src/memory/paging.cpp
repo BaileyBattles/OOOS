@@ -1,163 +1,124 @@
+#include "drivers/screen.h"
+#include "util/string.h"
 #include "kernel/types.h"
 #include "memory/kMemoryManger.h"
 #include "memory/paging.h"
 
-////////////////////
-// PageTableEntry //
-////////////////////
-
-PageTableEntry::PageTableEntry()
-{}
-
-PageTableEntry::PageTableEntry(u32 entry){
-    data = entry;
+void initializePageTableEntry(PageTableEntry entry, u32 data) {
+    entry = data;
 }
 
-bool PageTableEntry::isPresent() {
-    return data & 0x1;
+void initializePageDirectoryEntry(PageDirectoryEntry entry, u32 data) {
+    entry = data;
 }
 
-bool PageTableEntry::isWriteable(){
-    return data & 0x2;
+//Page Table Functions
+bool ptePresent(PageTableEntry entry){
+    return entry & 0x1;
 }
 
-bool PageTableEntry::isUserMode(){
-    return data & 0x4;
+bool pteWriteable(PageTableEntry entry){
+    return entry & 0x2;
 }
 
-bool PageTableEntry::hasBeenAccessed(){
-    return data & 0x20;
+bool pteUserMode(PageTableEntry entry){
+    return entry & 0x4;
 }
 
-bool PageTableEntry::isDirty(){
-    return data & 0x40;
+bool pteWritethrough(PageTableEntry entry){
+    return entry & 0x8;
 }
 
-u32 PageTableEntry::frameAddress(){
-    return (data & 0x7FFFF000) >> 12;
+bool pteAccessed(PageTableEntry entry){
+    return entry & 0x20;
 }
 
-u32 PageTableEntry::baseAddress(){
-    return frameAddress() * PAGE_SIZE;
+bool pteDirty(PageTableEntry entry){
+    return entry & 0x40;
 }
 
-void PageTableEntry::setBaseAddress(u32 baseAddress){
-    u32 frameAddress = baseAddress / PAGE_SIZE;
-    data |= frameAddress << 12;
+u32 pteBaseAddress(PageTableEntry entry){
+    return ((entry & 0x7FFFF000) >> 12);
 }
 
-void PageTableEntry::setPresent() {
-    data |= 0x1;
+void setPTEPresent(PageTableEntry &entry) {
+    entry = entry | 0x1;
 }
 
-u32 PageTableEntry::getData() {
-    return data;
+int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress){
+    entry = entry & ~0x7ffff000;
+    entry = entry | pteBaseAddress;
 }
 
-
-////////////////////////
-// PageDirectoryEntry //
-////////////////////////
-
-PageDirectoryEntry::PageDirectoryEntry(u32 entry){
-    data = entry;
+//Page Directory Functions
+bool pdePresent(PageDirectoryEntry entry){
+    return entry & 0x1;
+}
+bool pdeWriteable(PageDirectoryEntry entry){
+    return entry & 0x2;
+}
+bool pdeUserMode(PageDirectoryEntry entry){
+    return entry & 0x4;
+}
+bool pdeAccessed(PageDirectoryEntry entry){
+    return entry & 0x20;
+}
+bool pdeDirty(PageDirectoryEntry entry){
+    return entry & 0x40;
+}
+bool pdeFourMB(PageDirectoryEntry entry){
+    return entry & 0x80;
+}
+bool pdeBaseAddress(PageDirectoryEntry entry){
+    return ((entry & 0x7FFFF000) >> 12);
 }
 
-bool PageDirectoryEntry::isPresent() {
-    return data & 0x1;
+void setPDEPresent(PageDirectoryEntry &entry){
+    entry = entry | 0x1;
 }
 
-bool PageDirectoryEntry::isWriteable(){
-    return data & 0x2;
+void setPDEWriteable(PageDirectoryEntry &entry){
+    entry = entry | 0x2;
 }
 
-bool PageDirectoryEntry::isUserMode(){
-    return data & 0x4;
-}
-
-bool PageDirectoryEntry::isCacheEnabled(){
-    return data & 0x10;
-}
-
-bool PageDirectoryEntry::hasBeenAccessed(){
-    return data & 0x40;
-}
-
-u32 PageDirectoryEntry::pageSize() {
-    if (data & 0x80){
-        return 4 * MB;
-    }
-    return 4 * KB;
-}
-
-u32 PageDirectoryEntry::frameAddress(){
-    return (data & 0x7FFFF000) >> 12;
-}
-
-u32 PageDirectoryEntry::baseAddress(){
-    return frameAddress() * PAGE_SIZE;
-}
-
-///////////////
-// PageTable //
-///////////////
-
-PageTable::PageTable(u32 *pageTableAddress) {
-    pageTable = pageTableAddress;
-}
-
-void PageTable::setPageTableAddress(u32* pageTableAddress){
-    pageTable = pageTableAddress;
-}
-
-//Create a whole table of continuous mapping
-void PageTable::createContinuousMapping(u32 physicalStart, u32 virtualStart) {
-    for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
-        PageTableEntry pte;
-        pte.setBaseAddress(physicalStart + i * PAGE_SIZE);
-        pte.setPresent();
-        u32 index = getIndex(virtualStart + i * PAGE_SIZE);
-        installEntry(index, pte);
-    }
-}
-
-void PageTable::installEntry(u32 index, PageTableEntry pte){
-    entries[index] = pte;
-    pageTable[index] = pte.getData();
-}
-
-u32 PageTable::getIndex(u32 virtualAddress) {
-    return ((virtualAddress >> 12) & 0x3FF);
-}
-
-
-///////////////////
-// PageDirectory //
-///////////////////
-
-u32 PageDirectory::getIndex(u32 virtualAddress) {
-    return ((virtualAddress >> 22) & 0x3FF);
+int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress){
+    entry = entry & ~0x7ffff000;
+    entry = entry | pdeBaseAddress;
 }
 
 //////////////////////
 // PageTableManager //
 //////////////////////
 
-PageTableManager::PageTableManager() {
-    for (int i = 0; i < NUM_PAGETABLES; i++){
-        pageTables[i] = (PageTable *)KMM.kmalloc(sizeof(PageTable));
+u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
+    u32 currentAddress = baseAddress;
+    for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
+        setPTEBaseAddress(pageTable.entry[i], currentAddress);
+        setPTEPresent(pageTable.entry[i]);
+        currentAddress += 4*KB;
     }
+    return currentAddress;
 }
 
 void PageTableManager::initialize() {
+    pageDirectory = (PageDirectory *)KMM.pagemalloc();
 
-    void *pageDirectoryPage = KMM.pagemalloc();
+    u32 baseAddress = 0;
 
-    for (int i = 0; i < NUM_PAGETABLES; i++){
-        pageTables[i]->setPageTableAddress((u32 *)KMM.pagemalloc());
+
+    for (int i = 0; i < NUM_PAGETABLES; i++) {
+        pageTables[i] = (PageTable *)KMM.pagemalloc();
+        baseAddress = setContinuousPageTable(*pageTables[i], baseAddress);
     }
-    write_cr3((u32)pageDirectoryPage);
-    //initialize_cr0();
+
+    for (int i = 0; i < NUM_PAGETABLES; i++) {
+        setPDEPresent(pageDirectory->entry[i]);
+        setPDEWriteable(pageDirectory->entry[i]);
+        setPDEBaseAddress(pageDirectory->entry[i], (u32)pageTables[i]);
+    }
+
+    write_cr3((u32)pageDirectory);
+    initialize_cr0();
 }
 
 u32 PageTableManager::read_cr3()

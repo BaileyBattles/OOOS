@@ -7,10 +7,9 @@
 // kMemoryManager //
 ////////////////////
 
-KMemoryManager::KMemoryManager()
-{}
 
 void KMemoryManager::initialize(u32 address){
+    address = 0x180000;
     pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
     memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
     pagemallocBitmapLength = NUM_PAGES / 8;
@@ -66,16 +65,17 @@ u32 KMemoryManager::findNFree(int numBytes, u8 bitmap[], int bitmapLength){
     u32 numInARow = 0;
     u32 start = 0;
     for (int i = 0; i < bitmapLength; i++){
-        for (int i = 0; i < BITS_IN_BYTE; i++) {
+        for (int j = 0; j < BITS_IN_BYTE; j++) {
+            int currentIndex = i * BITS_IN_BYTE + j;
             if (numInARow == numBytes)
                 return start;
 
-            if (indexFree(i, bitmap)){
+            if (indexFree(currentIndex, bitmap)){
                 numInARow += 1;
             }
             else {
                 numInARow = 0;
-                start = i + 1;
+                start = currentIndex + 1;
             } 
         } 
     }

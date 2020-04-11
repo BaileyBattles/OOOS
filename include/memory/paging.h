@@ -13,72 +13,65 @@
 
 #define NUM_PAGETABLES 1024
 
-class PageTableEntry {
-public:
-    PageTableEntry();
-    PageTableEntry(u32 entry);
-    bool isPresent();
-    bool isWriteable();
-    bool isUserMode();
-    bool hasBeenAccessed();
-    bool isDirty();
-    u32 frameAddress(); //base address = frameAddress * 0x100
-    u32 baseAddress(); // = frameAddress * 0x100
+typedef u32 PageTableEntry;
+typedef u32 PageDirectoryEntry;
+typedef struct {
+    PageDirectoryEntry entry[NUM_PAGETABLES];
+} PageDirectory;
+typedef struct {
+    PageTableEntry entry[NUM_PAGETABLE_ENTRIES];
+} PageTable;
 
-    void setPresent();
-    void setBaseAddress(u32 baseAddress);
+void initializePageTableEntry(PageTableEntry entry, u32 data);
+void initializePageDirectoryEntry(PageDirectoryEntry entry, u32 data);
 
-    u32 getData();
-private:
-    u32 data;
-};
+//Page Table Functions
+//Getters
+bool ptePresent(PageTableEntry entry);
+bool pteWriteable(PageTableEntry entry);
+bool pteUserMode(PageTableEntry entry);
+bool pteWritethrough(PageTableEntry entry);
+bool pteCached(PageTableEntry entry);
+bool pteAccessed(PageTableEntry entry);
+bool pteDirty(PageTableEntry entry);
+u32 pteBaseAddress(PageTableEntry entry);
 
-class PageDirectoryEntry {
-public:
-    PageDirectoryEntry(u32 entry);
-    bool isPresent();
-    bool isWriteable();
-    bool isUserMode();
-    bool isCacheEnabled();
-    bool hasBeenAccessed();
-    u32 pageSize();
-    u32 frameAddress(); //base address = frameAddress * 0x100
-    u32 baseAddress(); // = frameAddress * 0x100
-private:
-    u32 data;
-};
+//Setters
+void setPTEPresent(PageTableEntry &entry);
+//returns 0 on success, -1 on failure
+int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress);
 
-class PageTable {
-public:
-    PageTable(){};
-    PageTable(u32 *pageTableAddress);
-    void createContinuousMapping(u32 physicalStart, u32 virtualStart);
-    void setPageTableAddress(u32 *pageTableAddress);
-private:
-    u32 getIndex(u32 virtualAddress);
-    u32 *pageTable;
+//Page Directory Functions
+bool pdePresent(PageDirectoryEntry entry);
+bool pdeWriteable(PageDirectoryEntry entry);
+bool pdeUserMode(PageDirectoryEntry entry);
+bool pdeAccessed(PageDirectoryEntry entry);
+bool pdeDirty(PageDirectoryEntry entry);
+bool pdeFourMB(PageDirectoryEntry entry);
+bool pdeBaseAddress(PageDirectoryEntry entry);
+//returns 0 on success, -1 on failure
+void setPDEPresent(PageDirectoryEntry &entry);
+void setPDEWriteable(PageDirectoryEntry &entry);
+int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress);
 
-    PageTableEntry entries[NUM_PAGETABLE_ENTRIES];
-    void installEntry(u32 index, PageTableEntry pte);
-};
-
-class PageDirectory {
-
-private:
-    u32 getIndex(u32 virtualAddress);
-};
+#define PTM PageTableManager::the()
 
 class PageTableManager {
 public:
-    PageTableManager();
     void initialize();
+    static PageTableManager& the() {
+        static PageTableManager instance;
+        return instance;
+    }
 
 private:
+    PageTableManager(){};
+    
     void initialize_cr0();
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
     u32 read_cr3();
-    PageDirectory pageDirectory;
+    PageDirectory *pageDirectory;
     PageTable *pageTables[NUM_PAGETABLES];
 };
 

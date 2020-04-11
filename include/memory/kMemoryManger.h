@@ -23,13 +23,20 @@ public:
         return instance;
     }
 
+    u32 theAddress() {
+        static KMemoryManager instance;
+        return (u32)&instance;
+    }
+
     void initialize(u32 address);
     void *kmalloc(int numBytes);
     void *pagemalloc(); //allocate one page
 private:
-    KMemoryManager();
+    KMemoryManager(){};
 
     u32 baseAddress;
+
+    u32 hackyFix();
 
     u8 kmallocMap[KERNEL_HEAP_SIZE / 8];
     int kmallocBitmapLength;
