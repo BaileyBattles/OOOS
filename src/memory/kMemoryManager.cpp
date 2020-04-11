@@ -7,7 +7,10 @@
 // kMemoryManager //
 ////////////////////
 
-KMemoryManager::KMemoryManager(u32 address){
+KMemoryManager::KMemoryManager()
+{}
+
+void KMemoryManager::initialize(u32 address){
     pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
     memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
     kmallocBitmapLength = NUM_PAGES / 8;

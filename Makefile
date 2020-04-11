@@ -13,7 +13,7 @@ OBJ = ${C_SOURCES:.cpp=.o    \
 CC = i686-elf-gcc
 GDB = gdb
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -Iinclude -fno-rtti -ffreestanding -fno-builtin -Wall -nostdlib
+CFLAGS = -g -Iinclude -fno-rtti -ffreestanding -fno-builtin -Wall -nostdlib -fno-threadsafe-statics
 
 kernel.img: kernel.elf
 	mkdir -p iso

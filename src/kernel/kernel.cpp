@@ -8,9 +8,6 @@
 
 extern unsigned long ebss;
 
-Keyboard keyboard;
-
-
 void kernelLoop() {
     while (true)
     {}
@@ -38,9 +35,11 @@ extern "C" void main(multiboot_header_t* multibootHeader) {
         (*i)();
     
     u32 endOfBss = (u32)&ebss;
-    KMemoryManager KMM(endOfBss);
+    KMM.initialize(endOfBss);
 
     InterruptManager interruptManager;
+
+    Keyboard keyboard;
     keyboard.initialize();
 
     //Idealy don't want KMM on stack, should be in BSS I think

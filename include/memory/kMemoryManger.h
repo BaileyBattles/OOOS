@@ -7,12 +7,23 @@
 #define NUM_PAGES 1025
 #define KERNEL_HEAP_SIZE 10*KB
 
+#define KMM KMemoryManager::the()
+
 class KMemoryManager{
 public:
-    KMemoryManager(u32 startAddress);
+    static KMemoryManager& the()
+    {
+        static KMemoryManager instance; // Guaranteed to be destroyed.
+                                // Instantiated on first use.
+        return instance;
+    }
+
+    void initialize(u32 address);
     void *kmalloc(int numBytes);
     void *pagemalloc(); //allocate one page
 private:
+    KMemoryManager();
+
     u32 baseAddress;
 
     u8 kmallocMap[KERNEL_HEAP_SIZE / 8];
