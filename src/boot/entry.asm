@@ -2,7 +2,7 @@ global loader
 global stack
 global stack_ptr
 
-extern main
+extern kernelMain
 
 MODULEALIGN equ 0x1
 MEMINFO     equ 0x2
@@ -35,7 +35,7 @@ loader:
   push eax ; argument 2 to main
   push ebx ; argument 1 to main
 
-  call main
+  call kernelMain
 
   cli
 
