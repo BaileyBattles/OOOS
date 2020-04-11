@@ -13,7 +13,7 @@ KMemoryManager::KMemoryManager()
 void KMemoryManager::initialize(u32 address){
     pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
     memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
-    kmallocBitmapLength = NUM_PAGES / 8;
+    pagemallocBitmapLength = NUM_PAGES / 8;
 
     kmallocStartAddress = pagemallocStartAddress + NUM_PAGES*PAGE_SIZE;
     memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
@@ -26,7 +26,16 @@ void *KMemoryManager::kmalloc(int numBytes){
         return nullptr;
     }
     setChunkUsed(startIndex, numBytes, kmallocMap);
-    return kmallocStartAddress + startIndex;
+    return kmallocStartAddress + startIndex * KMALLOC_SIZE;
+}
+
+void *KMemoryManager::pagemalloc(){
+    u32 startIndex = findNFree(1, pagemallocMap, pagemallocBitmapLength);
+    if (startIndex == -1) {
+        return nullptr;
+    }
+    setChunkUsed(startIndex, 1, pagemallocMap);
+    return pagemallocStartAddress + startIndex * PAGEMALLOC_SIZE;
 }
 
 void *KMemoryManager::calculateNextAllignedAddress(u32 address, u32 pageSize){

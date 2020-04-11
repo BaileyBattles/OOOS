@@ -1,4 +1,5 @@
 #include "kernel/types.h"
+#include "memory/kMemoryManger.h"
 #include "memory/paging.h"
 
 ////////////////////
@@ -139,6 +140,8 @@ u32 PageDirectory::getIndex(u32 virtualAddress) {
 //////////////////////
 
 void PageTableManager::initialize() {
+    void *PageDirectoryPage = KMM.pagemalloc();
+    void *PageDirectoryPage2 = KMM.pagemalloc();
     // PageTable pageTable;
     // for (int i = 0x0; i < TOTAL_MEMORY; i += 4*KB){
     //     pageTable.createContinuousMapping(i, i);

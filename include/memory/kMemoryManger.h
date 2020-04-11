@@ -4,8 +4,11 @@
 #include "kernel/types.h"
 #include "memory/paging.h"
 
-#define NUM_PAGES 1025
+#define NUM_PAGES 1032 //Should be a multiple of 8 for simplicity
 #define KERNEL_HEAP_SIZE 10*KB
+
+#define KMALLOC_SIZE 1
+#define PAGEMALLOC_SIZE 4*KB
 
 #define KMM KMemoryManager::the()
 
