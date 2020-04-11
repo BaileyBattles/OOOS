@@ -101,6 +101,7 @@ u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
 }
 
 void PageTableManager::initialize() {
+
     pageDirectory = (PageDirectory *)KMM.pagemalloc();
 
     u32 baseAddress = 0;
@@ -117,6 +118,7 @@ void PageTableManager::initialize() {
         setPDEBaseAddress(pageDirectory->entry[i], (u32)pageTables[i]);
     }
 
+    u32 val = read_cr0();
     write_cr3((u32)pageDirectory);
     initialize_cr0();
 }
@@ -125,6 +127,13 @@ u32 PageTableManager::read_cr3()
 {
     u32 val;
     __asm__("movl %%cr3,%0" : "=r"(val));
+    return val;
+}
+
+u32 PageTableManager::read_cr0()
+{
+    u32 val;
+    __asm__("movl %%cr0,%0" : "=r"(val));
     return val;
 }
 

@@ -73,6 +73,8 @@ private:
     u32 read_cr3();
     PageDirectory *pageDirectory;
     PageTable *pageTables[NUM_PAGETABLES];
+
+    u32 read_cr0();
 };
 
 #endif
