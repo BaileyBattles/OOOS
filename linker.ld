@@ -9,6 +9,9 @@ SECTIONS
     *(.text)
   }
   .rodata ALIGN (0x1000) : {
+    start_ctors = .;
+    *(.ctors)
+    end_ctors = .;
     *(.rodata)
   }
   .data ALIGN (0x1000) : {
