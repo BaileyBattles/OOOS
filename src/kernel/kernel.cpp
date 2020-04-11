@@ -37,14 +37,14 @@ void initializeKMM() {
 }
 
 void testKMM() {
-    char *buffer = (char*)KMM.kmalloc(32);
-    if (buffer == nullptr){
-        kprint("Failed to initialize buffer");
-    }
-    char *buffer2 = (char*)KMM.kmalloc(32);
-    if (buffer == buffer2) {
-        kprint("KMM allocated buffer == buffer2");
-    }
+    // char *buffer = (char*)KMM.kmalloc(32);
+    // if (buffer == nullptr){
+    //     kprint("Failed to initialize buffer");
+    // }
+    // char *buffer2 = (char*)KMM.kmalloc(32);
+    // if (buffer == buffer2) {
+    //     kprint("KMM allocated buffer == buffer2");
+    // }
 }
 
 

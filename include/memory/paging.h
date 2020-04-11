@@ -11,6 +11,8 @@
 #define NUM_PAGETABLE_ENTRIES 1024
 #define NUM_PAGEDIR_ENTRIES 1024
 
+#define NUM_PAGETABLES 1024
+
 class PageTableEntry {
 public:
     PageTableEntry();
@@ -48,8 +50,10 @@ private:
 
 class PageTable {
 public:
+    PageTable(){};
     PageTable(u32 *pageTableAddress);
     void createContinuousMapping(u32 physicalStart, u32 virtualStart);
+    void setPageTableAddress(u32 *pageTableAddress);
 private:
     u32 getIndex(u32 virtualAddress);
     u32 *pageTable;
@@ -66,6 +70,7 @@ private:
 
 class PageTableManager {
 public:
+    PageTableManager();
     void initialize();
 
 private:
@@ -73,7 +78,8 @@ private:
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
     u32 read_cr3();
-
+    PageDirectory pageDirectory;
+    PageTable *pageTables[NUM_PAGETABLES];
 };
 
 #endif

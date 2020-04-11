@@ -106,6 +106,10 @@ PageTable::PageTable(u32 *pageTableAddress) {
     pageTable = pageTableAddress;
 }
 
+void PageTable::setPageTableAddress(u32* pageTableAddress){
+    pageTable = pageTableAddress;
+}
+
 //Create a whole table of continuous mapping
 void PageTable::createContinuousMapping(u32 physicalStart, u32 virtualStart) {
     for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
@@ -139,13 +143,21 @@ u32 PageDirectory::getIndex(u32 virtualAddress) {
 // PageTableManager //
 //////////////////////
 
+PageTableManager::PageTableManager() {
+    for (int i = 0; i < NUM_PAGETABLES; i++){
+        pageTables[i] = (PageTable *)KMM.kmalloc(sizeof(PageTable));
+    }
+}
+
 void PageTableManager::initialize() {
-    void *PageDirectoryPage = KMM.pagemalloc();
-    void *PageDirectoryPage2 = KMM.pagemalloc();
-    // PageTable pageTable;
-    // for (int i = 0x0; i < TOTAL_MEMORY; i += 4*KB){
-    //     pageTable.createContinuousMapping(i, i);
-    // }
+
+    void *pageDirectoryPage = KMM.pagemalloc();
+
+    for (int i = 0; i < NUM_PAGETABLES; i++){
+        pageTables[i]->setPageTableAddress((u32 *)KMM.pagemalloc());
+    }
+    write_cr3((u32)pageDirectoryPage);
+    //initialize_cr0();
 }
 
 u32 PageTableManager::read_cr3()
