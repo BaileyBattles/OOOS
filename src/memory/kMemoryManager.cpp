@@ -66,15 +66,18 @@ u32 KMemoryManager::findNFree(int numBytes, u8 bitmap[], int bitmapLength){
     u32 numInARow = 0;
     u32 start = 0;
     for (int i = 0; i < bitmapLength; i++){
-        if (numInARow == numBytes)
-            return start;
-        if (indexFree(i, bitmap)){
-            numInARow += 1;
-        }
-        else {
-            numInARow = 0;
-            start = i + 1;
-        }  
+        for (int i = 0; i < BITS_IN_BYTE; i++) {
+            if (numInARow == numBytes)
+                return start;
+
+            if (indexFree(i, bitmap)){
+                numInARow += 1;
+            }
+            else {
+                numInARow = 0;
+                start = i + 1;
+            } 
+        } 
     }
     return -1;
 }

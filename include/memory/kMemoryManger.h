@@ -10,6 +10,8 @@
 #define KMALLOC_SIZE 1
 #define PAGEMALLOC_SIZE 4*KB
 
+#define BITS_IN_BYTE 8
+
 #define KMM KMemoryManager::the()
 
 class KMemoryManager{
