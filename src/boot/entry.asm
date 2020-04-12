@@ -21,8 +21,7 @@ MultiBootHeader:
 
   dd ZERO   
   dd ZERO   
-  dd ZERO 
-BSS_END_ADR:   
+  dd ZERO   
   dd ZERO    
   dd ZERO   
 

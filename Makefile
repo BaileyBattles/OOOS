@@ -15,7 +15,7 @@ GDB = gdb
 # -g: Use debugging symbols in gcc
 CFLAGS = -g -Iinclude -fno-rtti -ffreestanding -fno-builtin -Wall -nostdlib -fno-threadsafe-statics
 
-kernel.img: kernel.elf
+kernel.iso: kernel.elf
 	mkdir -p iso
 	mkdir -p iso/boot
 	mkdir -p iso/boot/grub
@@ -32,6 +32,9 @@ kernel.img: kernel.elf
 
 run: kernel.elf
 	qemu-system-i386 -kernel '$<' -m 512
+
+run-iso: kernel.iso
+	qemu-system-i386 -hda '$<' -m 512
 
 # Used for debugging purposes
 kernel.elf: src/boot/entry.o ${OBJ}
