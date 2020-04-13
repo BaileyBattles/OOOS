@@ -93,8 +93,14 @@ int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress){
 u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
     u32 currentAddress = baseAddress;
     for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
-        setPTEBaseAddress(pageTable.entry[i], currentAddress);
-        setPTEPresent(pageTable.entry[i]);
+        if (currentAddress == 0x30000000) {
+            setPTEBaseAddress(pageTable.entry[i], 0x800000);
+            setPTEPresent(pageTable.entry[i]);
+        }
+        else {
+            setPTEBaseAddress(pageTable.entry[i], currentAddress);
+            setPTEPresent(pageTable.entry[i]);
+        }
         currentAddress += 4*KB;
     }
     return currentAddress;
@@ -121,6 +127,10 @@ void PageTableManager::initialize() {
     u32 val = read_cr0();
     write_cr3((u32)pageDirectory);
     initialize_cr0();
+
+    u32 *ptr = (u32*)0x30000002;
+    *ptr = 25;
+    u32 value = *ptr;
 }
 
 u32 PageTableManager::read_cr3()
