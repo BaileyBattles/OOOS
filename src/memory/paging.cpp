@@ -38,7 +38,7 @@ bool pteDirty(PageTableEntry entry){
 }
 
 u32 pteBaseAddress(PageTableEntry entry){
-    return ((entry & 0x7FFFF000) >> 12);
+    return (entry & 0x7FFFF000);
 }
 
 void setPTEPresent(PageTableEntry &entry) {
@@ -69,8 +69,8 @@ bool pdeDirty(PageDirectoryEntry entry){
 bool pdeFourMB(PageDirectoryEntry entry){
     return entry & 0x80;
 }
-bool pdeBaseAddress(PageDirectoryEntry entry){
-    return ((entry & 0x7FFFF000) >> 12);
+u32 pdeBaseAddress(PageDirectoryEntry entry){
+    return (entry & 0x7FFFF000);
 }
 
 void setPDEPresent(PageDirectoryEntry &entry){
@@ -108,29 +108,45 @@ u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
 
 void PageTableManager::initialize() {
 
-    pageDirectory = (PageDirectory *)KMM.pagemalloc();
+    pageDirectoryPtr = (PageDirectory *)KMM.pagemalloc();
 
     u32 baseAddress = 0;
 
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
-        pageTables[i] = (PageTable *)KMM.pagemalloc();
-        baseAddress = setContinuousPageTable(*pageTables[i], baseAddress);
+        pageTablePtrs[i] = (PageTable *)KMM.pagemalloc();
+        baseAddress = setContinuousPageTable(*pageTablePtrs[i], baseAddress);
     }
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
-        setPDEPresent(pageDirectory->entry[i]);
-        setPDEWriteable(pageDirectory->entry[i]);
-        setPDEBaseAddress(pageDirectory->entry[i], (u32)pageTables[i]);
+        setPDEPresent(pageDirectoryPtr->entry[i]);
+        setPDEWriteable(pageDirectoryPtr->entry[i]);
+        setPDEBaseAddress(pageDirectoryPtr->entry[i], (u32)pageTablePtrs[i]);
     }
 
     u32 val = read_cr0();
-    write_cr3((u32)pageDirectory);
+    write_cr3((u32)pageDirectoryPtr);
     initialize_cr0();
 
     u32 *ptr = (u32*)0x30000002;
     *ptr = 25;
     u32 value = *ptr;
+
+    u32 e = physicalAddress((u32)ptr);
+}
+
+PageTableEntry PageTableManager::getPageTableEntry(u32 address) {
+    u32 pdIndex = address >> 22;
+    PageDirectoryEntry pde = pageDirectoryPtr->entry[pdIndex];
+    PageTable *pageTable = (PageTable *)pdeBaseAddress(pde);
+    u32 ptIndex = (address >> 12) & 0x3FF;
+    return pageTable->entry[ptIndex];
+}
+
+u32 PageTableManager::physicalAddress(u32 virtualAddress) {
+    PageTableEntry pte = getPageTableEntry(virtualAddress);
+    u32 baseAddress = pteBaseAddress(pte);
+    return pte + (virtualAddress & 0xFFF);
 }
 
 u32 PageTableManager::read_cr3()

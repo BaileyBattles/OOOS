@@ -48,7 +48,7 @@ bool pdeUserMode(PageDirectoryEntry entry);
 bool pdeAccessed(PageDirectoryEntry entry);
 bool pdeDirty(PageDirectoryEntry entry);
 bool pdeFourMB(PageDirectoryEntry entry);
-bool pdeBaseAddress(PageDirectoryEntry entry);
+u32 pdeBaseAddress(PageDirectoryEntry entry);
 //returns 0 on success, -1 on failure
 void setPDEPresent(PageDirectoryEntry &entry);
 void setPDEWriteable(PageDirectoryEntry &entry);
@@ -71,8 +71,11 @@ private:
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
     u32 read_cr3();
-    PageDirectory *pageDirectory;
-    PageTable *pageTables[NUM_PAGETABLES];
+    PageDirectory *pageDirectoryPtr;
+    PageTable *pageTablePtrs[NUM_PAGETABLES];
+
+    PageTableEntry getPageTableEntry(u32 address);
+    u32 physicalAddress(u32 virtualAddress);
 
     u32 read_cr0();
 };
