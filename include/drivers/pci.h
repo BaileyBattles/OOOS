@@ -16,6 +16,7 @@ public:
     bool deviceExists(u32 bus, u32 device, u32 function);
     u16 classID(u16 bus, u16 device, u16 func);
     u16 subclassID(u16 bus, u16 device, u16 func);
+    void scan();
 
 
 

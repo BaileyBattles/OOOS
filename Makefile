@@ -31,8 +31,10 @@ kernel.iso: kernel.elf
 	grub-mkrescue -o '$@' iso
 
 run: kernel.elf
-	qemu-system-i386 -kernel '$<' -m 512 -hda drive/storage.img
-
+	qemu-system-i386 -kernel '$<' -m 512 -drive file=drive/storage.img,index=0,media=disk,format=raw
+# run: kernel.elf
+# 	qemu-system-i386 -kernel '$<' -m 512 -drive file=drive/storage.img,format=raw,if=none,id=drive-virtio-disk0,cache=none,aio=native \
+# 										 -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x6,drive=drive-virtio-disk0,id=virtio-disk0   
 run-iso: kernel.iso
 	qemu-system-i386 -cdrom '$<' -m 512
 

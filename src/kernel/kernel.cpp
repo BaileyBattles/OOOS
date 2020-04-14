@@ -69,6 +69,8 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     PTM.initialize();
 
+    PCI::the().scan();
+
     kernelLoop();
 
 }
