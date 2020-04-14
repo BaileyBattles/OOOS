@@ -1,5 +1,6 @@
 #include "cpu/interrupt_manager.h"
 #include "drivers/keyboard.h"
+#include "drivers/pci.h"
 #include "drivers/screen.h"
 #include "kernel/multiboot.h"
 #include "memory/kMemoryManger.h"

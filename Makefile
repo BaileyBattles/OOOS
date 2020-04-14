@@ -31,10 +31,10 @@ kernel.iso: kernel.elf
 	grub-mkrescue -o '$@' iso
 
 run: kernel.elf
-	qemu-system-i386 -kernel '$<' -m 512
+	qemu-system-i386 -kernel '$<' -m 512 -hda drive/storage.img
 
 run-iso: kernel.iso
-	qemu-system-i386 -hda '$<' -m 512
+	qemu-system-i386 -cdrom '$<' -m 512
 
 # Used for debugging purposes
 kernel.elf: src/boot/entry.o ${OBJ}
@@ -42,7 +42,7 @@ kernel.elf: src/boot/entry.o ${OBJ}
 
 # Open the connection to qemu and load our kernel-object file with symbols
 debug: kernel.elf
-	qemu-system-i386 -s -S -kernel kernel.elf -m 512 -d guest_errors,int &
+	qemu-system-i386 -s -S -kernel kernel.elf -hda drive/storage.img -m 512 -d guest_errors,int &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 # Generic rules for wildcards
