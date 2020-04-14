@@ -1,3 +1,4 @@
+#include "memory/kMemoryManger.h"
 #include "util/string.h"
 
 char *int_to_ascii(int num, char buffer[]) {
