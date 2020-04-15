@@ -1,5 +1,11 @@
 #include "drivers/device.h"
 
+typedef struct {
+    u16 numCylinder;
+    u16 numHeads;
+    u16 sectorsPerTrack;
+} IdInfo;
+
 class IDE : Device {
 public:
     IDE();
@@ -18,7 +24,14 @@ private:
     u16 commandPort;
     u16 controlPort;
 
+    //ATA Info in FYSOS Ch 7 or 
+    //https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ata/ns-ata-_identify_device_data
+    u16 info[256];
+    IdInfo idInfo;
+    
+
     void identify();
     void ideWait();
     void setIDERegisters(u32 sectorNum, u32 numSectors);
+    void setIDInfo();
 };

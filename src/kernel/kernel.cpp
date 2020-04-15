@@ -70,7 +70,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     PTM.initialize();
 
-    PCI::the().scan();
+    //PCI::the().scan();
 
     IDE ide;
     ide.initialize();

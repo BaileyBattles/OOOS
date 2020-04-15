@@ -42,7 +42,7 @@ kernel.elf: src/boot/entry.o ${OBJ}
 
 # Open the connection to qemu and load our kernel-object file with symbols
 debug: kernel.elf
-	qemu-system-i386 -s -S -kernel kernel.elf  -drive id=disk,file=drive/storage.img,if=none -device ahci,id=ahci -device ide-drive,drive=disk,bus=ahci.0 -m 512 -d guest_errors,int &
+	qemu-system-i386 -s -S -kernel kernel.elf -drive file=drive/storage.img -m 512 -d guest_errors,int &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 # Generic rules for wildcards

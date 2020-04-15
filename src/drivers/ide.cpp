@@ -4,6 +4,8 @@
 #include "sys/io.h"
 #include "util/string.h"
 
+//Class that implements the IDE/PATA Standard
+
 IDE::IDE() {
     basePort = 0x1F0;
     errorPort = basePort + 1;
@@ -22,6 +24,27 @@ void IDE::ideWait() {
     }
     while(inb(commandPort) & 0x80)
       ;
+}
+
+void IDE::setIDInfo() {
+    for (int i = 0; i < 256; i++) {
+        u16 data = inw(basePort);
+        // char *text = "  \0";
+        // text[0] = (data >> 8) & 0xFF;
+        // text[1] = data & 0xFF;
+        // char buf[8];
+        // kprint(int_to_ascii(data, buf));
+        // kprint(" ");
+        info[i] = data;
+    }
+
+  //See MSFT Doc linked in ide.h
+    if (info[0] & (1 << 15)) {
+        kprint("THIS IS AN ATAPI DEVICE... NOT SUPPORTED\n");
+    }
+    idInfo.numCylinder = info[1];
+    idInfo.numHeads = info[3];
+    idInfo.sectorsPerTrack = info[6];
 }
 
 void IDE::identify() {
@@ -48,26 +71,12 @@ void IDE::identify() {
     while (!(status & 0x8))
       status = inb(commandPort);
       
-    char buf[5];
-    kprint(int_to_ascii(status, buf));
-
-    for (int i = 0; i < 256; i++) {
-        u16 data = inw(basePort);
-        char *text = "  \0";
-        text[0] = (data >> 8) & 0xFF;
-        text[1] = data & 0xFF;
-        kprint(text);
-    }
+    setIDInfo();
+    
 }
 
 void IDE::initialize() {    
     identify();
-    kprint("\n\n\n");
-    readSector(5);
-    kprint("\n\n\n");
-    writeSector(9);
-    readSector(9);
-
 }
 
 void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
