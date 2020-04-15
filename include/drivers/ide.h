@@ -20,5 +20,5 @@ private:
 
     void identify();
     void ideWait();
-    void setLBARegisters(u32 sectorNum);
+    void setIDERegisters(u32 sectorNum, u32 numSectors);
 };

@@ -32,7 +32,9 @@ void IDE::identify() {
       kprint("No IDE Drive");
     outb(devicePort, 0);
     outb(sectorCountPort, 0);
-    setLBARegisters(0);
+    outb(lbaLowPort, 0);
+    outb(lbaMidPort, 0);
+    outb(lbaHiPort, 0);
     outb(commandPort, 0xEC);
 
     status = inb(commandPort);
@@ -68,33 +70,27 @@ void IDE::initialize() {
 
 }
 
+void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
+    u8 lbaByte = (sectorNum & 0xF000000) >> 24;
+    outb(controlPort, 0);
+    outb(sectorCountPort, numSectors);
+    outb(lbaLowPort, (sectorNum & 0xFF));
+    outb(lbaMidPort, (sectorNum & 0xFF00) >> 8);
+    outb(lbaHiPort, (sectorNum & 0xFF00) >> 16);
+    outb(devicePort, 0xE0 | lbaByte);
+}
+
 // Only supports 28 bit LBA
 void IDE::readSector(u32 sectorNum){
     if (sectorNum > 0xFFFFFFF) {
         kprint("IDE only supports 28 bit LBA, Sector Num is too big");
     }
-    u8 lbaByte = (sectorNum & 0xF000000) >> 24;
-    outb(controlPort, 0);
-    outb(sectorCountPort, 1);
-    setLBARegisters(sectorNum);
-
-    outb(devicePort, 0xE0 | lbaByte);
-    outb(commandPort, 0x20);
-
-    u8 status = inb(commandPort);
-
     
-    if(status & 0x01)
-    {
-        kprint("ERROR");
-        return;
-    }
+    setIDERegisters(sectorNum, 1);
+    outb(commandPort, 0x20);
     
     ideWait();
     kprint("Reading IDE");
-
-    for (int i = 0; i < 20; i++)
-        status = inb(commandPort);
 
     for (int i = 0; i < 512; i += 2) {
         char text[3];
@@ -115,11 +111,7 @@ void IDE::writeSector(u32 sectorNum) {
     if (sectorNum > 0xFFFFFFF) {
             kprint("IDE only supports 28 bit LBA, Sector Num is too big");
         }
-    u8 lbaByte = (sectorNum & 0xF000000) >> 24;
-    outb(devicePort, 0xE0 | lbaByte);
-    outb(errorPort, 0);
-    outb(sectorCountPort, 1);
-    setLBARegisters(sectorNum);
+    setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x30);
 
     ideWait();
@@ -130,12 +122,6 @@ void IDE::writeSector(u32 sectorNum) {
     }
     ideWait();
 
-}
-
-void IDE::setLBARegisters(u32 sectorNum) {
-    outb(lbaLowPort, (sectorNum & 0xFF));
-    outb(lbaMidPort, (sectorNum & 0xFF00) >> 8);
-    outb(lbaHiPort, (sectorNum & 0xFF00) >> 16);
 }
 
 void IDE::handleInterrupt(registers_t r){}
