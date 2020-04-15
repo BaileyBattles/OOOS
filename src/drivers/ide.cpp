@@ -16,6 +16,14 @@ IDE::IDE() {
     controlPort = basePort + 0x206;
 }
 
+void IDE::ideWait() {
+    for (u32 i = 0; i < 4; i++) {
+      inb(controlPort);
+    }
+    while(inb(commandPort) & 0x80)
+      ;
+}
+
 void IDE::identify() {
     outb(basePort, 0xA0);
     outb(controlPort, 0);
@@ -31,6 +39,13 @@ void IDE::identify() {
     if (status == 0) {
       kprint("Problem");
     }
+
+    while (status == 0x80)
+      status = inb(commandPort);
+    
+    while (!(status & 0x8))
+      status = inb(commandPort);
+      
     char buf[5];
     kprint(int_to_ascii(status, buf));
 
@@ -43,22 +58,13 @@ void IDE::identify() {
     }
 }
 
-void IDE::initialize() {
-        outb(0x1f6, 0xA0 | (2<<4));
-        for(int i=0; i<5; i++){
-                u8 x = inb(0x3f6);
-                // if(inb(0x1f7) != 0){
-                //         kprint("Found disk\n");
-        // }
-    }
-        u8 x1 = inb(0x1f4);
-            u8 x2 = inb(0x1f5);
-    
+void IDE::initialize() {    
     identify();
     kprint("\n\n\n");
     readSector(5);
     kprint("\n\n\n");
-    readSector(5);
+    writeSector(9);
+    readSector(9);
 
 }
 
@@ -76,9 +82,7 @@ void IDE::readSector(u32 sectorNum){
     outb(commandPort, 0x20);
 
     u8 status = inb(commandPort);
-    while(((status & 0x80) == 0x80)
-        && ((status & 0x01) != 0x01))
-        status = inb(commandPort);
+
     
     if(status & 0x01)
     {
@@ -86,7 +90,11 @@ void IDE::readSector(u32 sectorNum){
         return;
     }
     
+    ideWait();
     kprint("Reading IDE");
+
+    for (int i = 0; i < 20; i++)
+        status = inb(commandPort);
 
     for (int i = 0; i < 512; i += 2) {
         char text[3];
@@ -94,8 +102,11 @@ void IDE::readSector(u32 sectorNum){
         text[0] = data & 0xFF;
         text[1] = (data >> 8) & 0xFF;
         text[2] = '\0';
-        kprint(text);
+        char buf[10];
+        kprint(int_to_ascii(data, buf));
+        kprint(" ");
     }
+    ideWait();
 
     //Make sure you read all the data!!!!!    
 }
@@ -104,17 +115,21 @@ void IDE::writeSector(u32 sectorNum) {
     if (sectorNum > 0xFFFFFFF) {
             kprint("IDE only supports 28 bit LBA, Sector Num is too big");
         }
-        u8 lbaByte = (sectorNum & 0xF000000) >> 24;
-        outb(devicePort, 0xE0 | lbaByte);
-        outb(errorPort, 0);
-        outb(sectorCountPort, 1);
-        setLBARegisters(sectorNum);
-        outb(commandPort, 0x30);
+    u8 lbaByte = (sectorNum & 0xF000000) >> 24;
+    outb(devicePort, 0xE0 | lbaByte);
+    outb(errorPort, 0);
+    outb(sectorCountPort, 1);
+    setLBARegisters(sectorNum);
+    outb(commandPort, 0x30);
 
-        kprint("Writing to IDE");
+    ideWait();
+    kprint("Writing to IDE");
 
-        for(int i = 0; i < 512; i++)
-                outw(commandPort, 0x15);
+    for(int i = 0; i < 512; i+= 2){
+        outl(basePort, 'c');
+    }
+    ideWait();
+
 }
 
 void IDE::setLBARegisters(u32 sectorNum) {

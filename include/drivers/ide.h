@@ -19,5 +19,6 @@ private:
     u16 controlPort;
 
     void identify();
+    void ideWait();
     void setLBARegisters(u32 sectorNum);
 };
