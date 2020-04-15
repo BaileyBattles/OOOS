@@ -1,3 +1,4 @@
+#include "cpu/interrupt_manager.h"
 #include "drivers/keyboard.h"
 #include "drivers/screen.h"
 #include "sys/io.h"

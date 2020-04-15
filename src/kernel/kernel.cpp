@@ -1,4 +1,5 @@
 #include "cpu/interrupt_manager.h"
+#include "drivers/ide.h"
 #include "drivers/keyboard.h"
 #include "drivers/pci.h"
 #include "drivers/screen.h"
@@ -70,6 +71,9 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     PTM.initialize();
 
     PCI::the().scan();
+
+    IDE ide;
+    ide.initialize();
 
     kernelLoop();
 

@@ -25,6 +25,7 @@ private:
     void writeToAddressPort(u32 bus, u32 device, u32 function, u32 offset);
     u32 readFromDataPort();
     u32 read(u16 bus, u16 device, u16 func, u32 offset);
+    void checkIDE(int bus, int device, int func);
 
 };
 

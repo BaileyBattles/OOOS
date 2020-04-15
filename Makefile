@@ -31,10 +31,8 @@ kernel.iso: kernel.elf
 	grub-mkrescue -o '$@' iso
 
 run: kernel.elf
-	qemu-system-i386 -kernel '$<' -m 512 -drive file=drive/storage.img,index=0,media=disk,format=raw
-# run: kernel.elf
-# 	qemu-system-i386 -kernel '$<' -m 512 -drive file=drive/storage.img,format=raw,if=none,id=drive-virtio-disk0,cache=none,aio=native \
-# 										 -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x6,drive=drive-virtio-disk0,id=virtio-disk0   
+	qemu-system-i386 -kernel '$<' -m 512 -drive file=drive/storage.img
+	
 run-iso: kernel.iso
 	qemu-system-i386 -cdrom '$<' -m 512
 
@@ -44,7 +42,7 @@ kernel.elf: src/boot/entry.o ${OBJ}
 
 # Open the connection to qemu and load our kernel-object file with symbols
 debug: kernel.elf
-	qemu-system-i386 -s -S -kernel kernel.elf -hda drive/storage.img -m 512 -d guest_errors,int &
+	qemu-system-i386 -s -S -kernel kernel.elf  -drive id=disk,file=drive/storage.img,if=none -device ahci,id=ahci -device ide-drive,drive=disk,bus=ahci.0 -m 512 -d guest_errors,int &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 # Generic rules for wildcards
