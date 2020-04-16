@@ -67,7 +67,7 @@ void IDE::identify() {
       kprint("Problem");
     }
 
-    while (status == 0x80)
+    while (status & 0x80)
       status = inb(commandPort);
     
     while (!(status & 0x8))
@@ -98,11 +98,13 @@ void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
 }
 
 // Only supports 28 bit LBA
+// Size better be the
 int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
     if (validSector(sectorNum) == -1)
         return -1;
 
 
+    ideWait();
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x20);
     
@@ -111,14 +113,7 @@ int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
     int index = 0;
     while (index < size) {
         char text[3];
-        u8 status = inb(commandPort);
         u16 data = inw(basePort);
-        char buff[10];
-        while (data == 0){
-            data = inw(basePort);
-        }
-
-        
         text[0] = data & 0xFF;
         if (index + 1 < size)
             text[1] = ((data & 0xFF00) >> 8);
@@ -164,15 +159,15 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
     kprint("Writing to IDE");
 
     int index = 0;
-    for(int index = 0; index < 512; index+= 2){
+    for(index = 0; index < size; index+= 2){
         u16 data = (buffer[index] & 0xFF);
         if (index + 1 < size)
             data |= (buffer[index + 1] << 8) & 0xFF00;
-        outl(basePort, data);
+        outw(basePort, data);
     }
 
-    // for (; index < 512; index += 2)
-    //     outl(basePort, 0);
+    for (; index < 512; index += 2)
+        outw(basePort, 0);
 
     ideWait();
     return 0;
