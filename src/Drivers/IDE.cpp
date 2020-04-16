@@ -1,5 +1,5 @@
 #include "CPU/InterruptManager.h"
-#include "Drivers/Ide.h"
+#include "Drivers/IDE.h"
 #include "Drivers/Screen.h"
 #include "Sys/Io.h"
 #include "Util/String.h"

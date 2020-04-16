@@ -1,4 +1,4 @@
-#include "Drivers/Pci.h"
+#include "Drivers/PCI.h"
 #include "Drivers/Screen.h"
 
 #include "Sys/Io.h"
