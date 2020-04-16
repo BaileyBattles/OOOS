@@ -1,13 +1,13 @@
-C_SOURCES = $(wildcard src/kernel/*.cpp   \
-					   src/drivers/*.cpp  \
-					   src/cpu/*.cpp      \
-					   src/sys/*.cpp      \
-					   src/util/*.cpp     \
-					   src/memory/*.cpp   \
+C_SOURCES = $(wildcard src/Kernel/*.cpp   \
+					   src/Drivers/*.cpp  \
+					   src/CPU/*.cpp      \
+					   src/Sys/*.cpp      \
+					   src/Util/*.cpp     \
+					   src/Memory/*.cpp   \
 					   )
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.cpp=.o    \
-        src/cpu/interrupt.o} 
+        src/CPU/Interrupt.o} 
 
 # Change this if your cross-compiler is somewhere else
 CC = i686-elf-gcc
@@ -37,7 +37,7 @@ run-iso: kernel.iso
 	qemu-system-i386 -cdrom '$<' -m 512
 
 # Used for debugging purposes
-kernel.elf: src/boot/entry.o ${OBJ}
+kernel.elf: src/Boot/Entry.o ${OBJ}
 	i686-elf-ld -o $@ -T linker.ld $^ 
 
 # Open the connection to qemu and load our kernel-object file with symbols
