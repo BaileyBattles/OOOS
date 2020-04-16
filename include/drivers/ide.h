@@ -1,7 +1,7 @@
 #include "drivers/device.h"
 
 typedef struct {
-    u16 numCylinder;
+    u16 numCylinders;
     u16 numHeads;
     u16 sectorsPerTrack;
 } IdInfo;
@@ -11,8 +11,8 @@ public:
     IDE();
     void initialize();
     void handleInterrupt(registers_t r);
-    void readSector(u32 sectorNum);
-    void writeSector(u32 sectorNum);
+    int readSector(u32 sectorNum);
+    int writeSector(u32 sectorNum);
 private:
     u16 basePort;
     u16 errorPort;
@@ -23,6 +23,8 @@ private:
     u16 devicePort;
     u16 commandPort;
     u16 controlPort;
+    
+    u32 numSectors; //can be u32 because using 28 bit LBA
 
     //ATA Info in FYSOS Ch 7 or 
     //https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ata/ns-ata-_identify_device_data
@@ -34,4 +36,5 @@ private:
     void ideWait();
     void setIDERegisters(u32 sectorNum, u32 numSectors);
     void setIDInfo();
+    int validSector(u32 sectorNum);
 };

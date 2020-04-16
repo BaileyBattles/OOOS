@@ -42,7 +42,7 @@ void IDE::setIDInfo() {
     if (info[0] & (1 << 15)) {
         kprint("THIS IS AN ATAPI DEVICE... NOT SUPPORTED\n");
     }
-    idInfo.numCylinder = info[1];
+    idInfo.numCylinders = info[1];
     idInfo.numHeads = info[3];
     idInfo.sectorsPerTrack = info[6];
 }
@@ -72,11 +72,16 @@ void IDE::identify() {
       status = inb(commandPort);
       
     setIDInfo();
+
+    numSectors = idInfo.numCylinders * idInfo.numHeads * idInfo.sectorsPerTrack;
     
 }
 
 void IDE::initialize() {    
     identify();
+    char buf[6];
+    writeSector(2097152);
+    readSector(2097152);
 }
 
 void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
@@ -90,11 +95,10 @@ void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
 }
 
 // Only supports 28 bit LBA
-void IDE::readSector(u32 sectorNum){
-    if (sectorNum > 0xFFFFFFF) {
-        kprint("IDE only supports 28 bit LBA, Sector Num is too big");
-    }
-    
+int IDE::readSector(u32 sectorNum){
+    if (validSector(sectorNum) == -1)
+        return -1;
+
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x20);
     
@@ -108,18 +112,37 @@ void IDE::readSector(u32 sectorNum){
         text[1] = (data >> 8) & 0xFF;
         text[2] = '\0';
         char buf[10];
-        kprint(int_to_ascii(data, buf));
-        kprint(" ");
+        kprint(text);
     }
     ideWait();
 
-    //Make sure you read all the data!!!!!    
+    //Make sure you read all the data!!!!! 
+
+    return 0;   
 }
 
-void IDE::writeSector(u32 sectorNum) {
+int IDE::validSector(u32 sectorNum) {
     if (sectorNum > 0xFFFFFFF) {
-            kprint("IDE only supports 28 bit LBA, Sector Num is too big");
-        }
+        kprint("IDE only supports 28 bit LBA, Sector Num is too big\n");
+        return -1;
+    }
+    if (sectorNum > numSectors) {
+        kprint("Invalid sector number ");
+        char errorBuffer[10];
+        kprint(int_to_ascii(sectorNum, errorBuffer));
+        kprint(". There are only ");
+        char errorBuffer2[10];
+        kprint(int_to_ascii(numSectors, errorBuffer));
+        kprint(" sectors.\n");
+        return -1;
+    }
+    return 0;
+}
+
+int IDE::writeSector(u32 sectorNum) {
+    if (validSector(sectorNum) == -1)
+        return -1;
+
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x30);
 
@@ -130,7 +153,7 @@ void IDE::writeSector(u32 sectorNum) {
         outl(basePort, 'c');
     }
     ideWait();
-
+    return 0;
 }
 
 void IDE::handleInterrupt(registers_t r){}
