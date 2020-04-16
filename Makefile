@@ -1,6 +1,7 @@
 C_SOURCES = $(wildcard src/Kernel/*.cpp   \
 					   src/Drivers/*.cpp  \
 					   src/CPU/*.cpp      \
+					   src/FS/*.cpp       \
 					   src/Sys/*.cpp      \
 					   src/Util/*.cpp     \
 					   src/Memory/*.cpp   \
