@@ -6,7 +6,7 @@
 class FileSystem {
 public:
     FileSystem(FileDevice &theFileDevice);
-private:
+protected:
     FileDevice *fileDevice;
 };
 

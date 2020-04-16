@@ -4,6 +4,7 @@
 #include "Drivers/Keyboard.h"
 #include "Drivers/PCI.h"
 #include "Drivers/Screen.h"
+#include "FS/FAT16.h"
 #include "FS/FileSystem.h"
 #include "Kernel/Multiboot.h"
 #include "Memory/KMemoryManager.h"
@@ -77,7 +78,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     IDE ide0(IDE0_PORT);
     ide0.initialize();
 
-    FileSystem FS(ide0);
+    FAT16 FS(ide0);
     kernelLoop();
 
 }
