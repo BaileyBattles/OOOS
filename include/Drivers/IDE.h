@@ -42,4 +42,6 @@ private:
     void setIDERegisters(u32 sectorNum, u32 numSectors);
     void setIDInfo();
     int validSector(u32 sectorNum);
+
+    void flushCache();
 };

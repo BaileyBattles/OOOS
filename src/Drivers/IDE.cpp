@@ -168,6 +168,8 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
         outw(basePort, 0);
 
     ideWait();
+
+    flushCache();
     return 0;
 }
 
@@ -177,6 +179,11 @@ int IDE::deviceSize() {
 
 int IDE::sectorSize() {
     return IDE_SECTOR_SIZE;
+}
+
+void IDE::flushCache() {
+    outb(commandPort, 0xE7);
+    ideWait();
 }
 
 void IDE::handleInterrupt(registers_t r){}
