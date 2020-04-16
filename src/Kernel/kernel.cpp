@@ -1,8 +1,10 @@
 #include "CPU/InterruptManager.h"
+#include "Drivers/FileDevice.h"
 #include "Drivers/IDE.h"
 #include "Drivers/Keyboard.h"
 #include "Drivers/PCI.h"
 #include "Drivers/Screen.h"
+#include "FS/FileSystem.h"
 #include "Kernel/Multiboot.h"
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
@@ -72,9 +74,10 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     //PCI::the().scan();
 
-    IDE ide;
-    ide.initialize();
+    IDE ide0(IDE0_PORT);
+    ide0.initialize();
 
+    FileSystem FS(ide0);
     kernelLoop();
 
 }

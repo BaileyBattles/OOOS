@@ -20,4 +20,6 @@ typedef          char      s8;
 
 #define NULL 0
 
+#define IDE0_PORT 0x1F0
+
 #endif

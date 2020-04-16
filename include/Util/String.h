@@ -2,5 +2,6 @@
 #define __STRING_H__
 
 char *int_to_ascii(int n, char buffer[]);
+int strlen(char buff[]);
 
 #endif

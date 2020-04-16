@@ -22,3 +22,10 @@ char *int_to_ascii(int num, char buffer[]) {
     buffer[len] = '\0';
     return buffer;
 }
+
+int strlen(char buff[]) {
+    int len = 0;
+    for(; *buff != '\0'; buff++)
+        len++;
+    return len;
+}

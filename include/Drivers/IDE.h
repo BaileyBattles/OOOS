@@ -6,13 +6,13 @@ typedef struct {
     u16 sectorsPerTrack;
 } IdInfo;
 
-class IDE : FileDevice {
+class IDE : public FileDevice {
 public:
-    IDE();
+    IDE(u32 port);
     void initialize();
     void handleInterrupt(registers_t r);
-    int readSector(u32 sectorNum);
-    int writeSector(u32 sectorNum);
+    int readSector(u32 sectorNum, char* buffer, u32 size);
+    int writeSector(u32 sectorNum, char* buffer, u32 size);
 private:
     u16 basePort;
     u16 errorPort;

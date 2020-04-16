@@ -6,8 +6,8 @@
 
 //Class that implements the IDE/PATA Standard
 
-IDE::IDE() {
-    basePort = 0x1F0;
+IDE::IDE(u32 port) {
+    basePort = port;
     errorPort = basePort + 1;
     sectorCountPort = basePort + 2;
     lbaLowPort = basePort + 3;
@@ -22,8 +22,9 @@ void IDE::ideWait() {
     for (u32 i = 0; i < 4; i++) {
       inb(controlPort);
     }
-    while(inb(commandPort) & 0x80)
-      ;
+    u8 status = inb(commandPort);
+    while(status & 0x80)
+      status = inb(commandPort);
 }
 
 void IDE::setIDInfo() {
@@ -80,9 +81,10 @@ void IDE::identify() {
 
 void IDE::initialize() {    
     identify();
-    char buf[6];
-    writeSector(15);
-    readSector(15);
+    char buf[512];
+    char string[] = "This is my string that I am using\n";
+    //writeSector(16, string, 35);
+    //readSector(12, buf, 36);
 }
 
 void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
@@ -96,28 +98,39 @@ void IDE::setIDERegisters(u32 sectorNum, u32 numSectors) {
 }
 
 // Only supports 28 bit LBA
-int IDE::readSector(u32 sectorNum){
+int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
     if (validSector(sectorNum) == -1)
         return -1;
+
 
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x20);
     
-    ideWait();
     kprint("Reading IDE");
 
-    for (int i = 0; i < 512; i += 2) {
+    int index = 0;
+    while (index < size) {
         char text[3];
+        u8 status = inb(commandPort);
         u16 data = inw(basePort);
+        char buff[10];
+        while (data == 0){
+            data = inw(basePort);
+        }
+
+        
         text[0] = data & 0xFF;
-        text[1] = (data >> 8) & 0xFF;
+        if (index + 1 < size)
+            text[1] = ((data & 0xFF00) >> 8);
         text[2] = '\0';
-        char buf[10];
         kprint(text);
+        index += 2;
     }
-    ideWait();
 
     //Make sure you read all the data!!!!! 
+    for (; index < 512; index += 2)
+        inw(basePort);
+    ideWait();
 
     return 0;   
 }
@@ -140,7 +153,7 @@ int IDE::validSector(u32 sectorNum) {
     return 0;
 }
 
-int IDE::writeSector(u32 sectorNum) {
+int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
     if (validSector(sectorNum) == -1)
         return -1;
 
@@ -150,9 +163,17 @@ int IDE::writeSector(u32 sectorNum) {
     ideWait();
     kprint("Writing to IDE");
 
-    for(int i = 0; i < 512; i+= 2){
-        outl(basePort, 'c');
+    int index = 0;
+    for(int index = 0; index < 512; index+= 2){
+        u16 data = (buffer[index] & 0xFF);
+        if (index + 1 < size)
+            data |= (buffer[index + 1] << 8) & 0xFF00;
+        outl(basePort, data);
     }
+
+    // for (; index < 512; index += 2)
+    //     outl(basePort, 0);
+
     ideWait();
     return 0;
 }
