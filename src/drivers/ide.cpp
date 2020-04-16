@@ -41,6 +41,7 @@ void IDE::setIDInfo() {
   //See MSFT Doc linked in ide.h
     if (info[0] & (1 << 15)) {
         kprint("THIS IS AN ATAPI DEVICE... NOT SUPPORTED\n");
+        return;
     }
     idInfo.numCylinders = info[1];
     idInfo.numHeads = info[3];
