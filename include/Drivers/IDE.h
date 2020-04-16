@@ -1,4 +1,4 @@
-#include "Drivers/Device.h"
+#include "Drivers/FileDevice.h"
 
 typedef struct {
     u16 numCylinders;
@@ -6,7 +6,7 @@ typedef struct {
     u16 sectorsPerTrack;
 } IdInfo;
 
-class IDE : Device {
+class IDE : FileDevice {
 public:
     IDE();
     void initialize();
