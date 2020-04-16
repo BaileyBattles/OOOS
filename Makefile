@@ -56,12 +56,13 @@ debug: kernel.elf
 
 clean:
 	rm -rf *.bin *.dis *.o os-image.bin *.elf *.img
-	rm -rf src/kernel/*.o \
-		   src/memory/*.o \
-		   src/boot/*.bin \
-		   src/drivers/*.o \
-		   src/boot/*.o \
-		   src/cpu/*.o \
-		   src/util/*.o \
-		   src/sys/*.o \
+	rm -rf src/Kernel/*.o \
+		   src/Memory/*.o \
+		   src/Boot/*.bin \
+		   src/Drivers/*.o \
+		   src/Boot/*.o \
+		   src/CPU/*.o \
+		   src/Util/*.o \
+		   src/Sys/*.o \
+		   src/FS/*.o \
 		   iso

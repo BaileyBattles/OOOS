@@ -10,6 +10,8 @@ public:
     virtual void handleInterrupt(registers_t r);
     virtual int readSector(u32 sectorNum, char* buffer, u32 size);
     virtual int writeSector(u32 sectorNum, char* buffer, u32 size);
+
+    virtual int deviceSize();
 };
 
 #endif

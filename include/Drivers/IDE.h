@@ -1,5 +1,7 @@
 #include "Drivers/FileDevice.h"
 
+#define IDE_SECTOR_SIZE 512
+
 typedef struct {
     u16 numCylinders;
     u16 numHeads;
@@ -13,6 +15,8 @@ public:
     void handleInterrupt(registers_t r);
     int readSector(u32 sectorNum, char* buffer, u32 size);
     int writeSector(u32 sectorNum, char* buffer, u32 size);
+
+    int deviceSize();
 private:
     u16 basePort;
     u16 errorPort;

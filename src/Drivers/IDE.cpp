@@ -173,4 +173,8 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
     return 0;
 }
 
+int IDE::deviceSize() {
+    return numSectors * IDE_SECTOR_SIZE;
+}
+
 void IDE::handleInterrupt(registers_t r){}
