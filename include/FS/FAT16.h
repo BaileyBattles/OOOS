@@ -11,11 +11,13 @@
 #define ROOT_ENTRIES_COUNT 512
 
 #define FAT16_NUM_CLUSTERS_RESERVED 2
-#define FAT16_NUM_CLUSTERS 65536
+#define FAT16_MAX_CLUSTERS 65536
 #define FAT16_AVAILABLE_CLUSTER 0x0
 #define FAT16_RESERVED_CLUSTER 0xFFF0
 #define FAT16_BAD_CLUSTER 0xFFF7
 #define FAT16_END_OF_FILE 0xFFF8
+
+#define FATENTRY_PER_SECTOR 16
 
 #define USED_BEFORE_BUT_NOW_FREE 0x05 //To work with Japanese chars
 
@@ -25,9 +27,7 @@ class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
 private:
-    int sectorsPerCluster;
-    int numberOfFATCopies;
-    int rootEntriesCount; //512 recommended
+    int numClusters;
     typedef struct {
 
         char reserved[BPB_NUM_RESERVED];
@@ -49,6 +49,7 @@ private:
 
     void format();
     void writeBPB();
+    void writeFATs();
 
     //File Attributes
     bool isArchive(FAT16_DirEnt dirEnt);

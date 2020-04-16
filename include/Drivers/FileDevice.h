@@ -12,6 +12,7 @@ public:
     virtual int writeSector(u32 sectorNum, char* buffer, u32 size);
 
     virtual int deviceSize();
+    virtual int sectorSize();
 };
 
 #endif

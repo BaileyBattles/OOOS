@@ -108,7 +108,7 @@ int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x20);
     
-    kprint("Reading IDE");
+    //kprint("Reading IDE");
 
     int index = 0;
     while (index < size) {
@@ -156,8 +156,6 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
     outb(commandPort, 0x30);
 
     ideWait();
-    kprint("Writing to IDE");
-
     int index = 0;
     for(index = 0; index < size; index+= 2){
         u16 data = (buffer[index] & 0xFF);
@@ -175,6 +173,10 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
 
 int IDE::deviceSize() {
     return numSectors * IDE_SECTOR_SIZE;
+}
+
+int IDE::sectorSize() {
+    return IDE_SECTOR_SIZE;
 }
 
 void IDE::handleInterrupt(registers_t r){}

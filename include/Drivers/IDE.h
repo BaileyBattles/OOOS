@@ -17,6 +17,7 @@ public:
     int writeSector(u32 sectorNum, char* buffer, u32 size);
 
     int deviceSize();
+    int sectorSize();
 private:
     u16 basePort;
     u16 errorPort;
