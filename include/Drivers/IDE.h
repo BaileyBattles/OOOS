@@ -1,6 +1,7 @@
 #include "Drivers/FileDevice.h"
 
 #define IDE_SECTOR_SIZE 512
+#define IDE_BUSY 0x80
 
 typedef struct {
     u16 numCylinders;
@@ -26,8 +27,8 @@ private:
     u16 lbaMidPort;
     u16 lbaHiPort;
     u16 devicePort;
-    u16 commandPort;
-    u16 controlPort;
+    u16 statusPort;
+    u16 altStatusPort;
     
     u32 numSectors; //can be u32 because using 28 bit LBA
 
