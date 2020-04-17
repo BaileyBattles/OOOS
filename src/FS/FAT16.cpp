@@ -12,6 +12,7 @@ FAT16::FAT16(FileDevice &theFileDevice) :
     numFATClusters = numClusters / numEntriesPerCluster;
 
     rootCluster = numFATClusters + 1;
+    dirEntsPerSector = FAT16_SECTOR_SIZE / sizeof(FAT16_DirEnt);
 
     startFAT = SECTORS_PER_CLUSTER * 1; //start in the second cluster
     if (numClusters > FAT16_MAX_CLUSTERS)
@@ -59,8 +60,8 @@ void FAT16::writeFAT() {
 }
 
 void FAT16::createRootDir() {
-    FAT16_DirEnt dot = makeDir(".", 1, rootCluster, rootCluster);  
-    FAT16_DirEnt doubleDot = makeDir("..", 2, rootCluster, rootCluster);
+    int dot = makeDir(".", 1, rootCluster, rootCluster);  
+    int doubleDot = makeDir("..", 2, rootCluster, rootCluster);
 }
 
 
@@ -68,13 +69,17 @@ void FAT16::createRootDir() {
 // Core Functionality //
 ////////////////////////
 
-FAT16_DirEnt FAT16::makeDir(char fileName[], int nameLen, 
+int FAT16::makeDir(char fileName[], int nameLen, 
                             int startCluster, int homeCluster) {
     FAT16_DirEnt dir;
     memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
     if (nameLen > 8) {
         kprint("FAT16:Name can only be 8 chars");
-        return dir;
+        return -1;
+    }
+
+    if (fileExistsInCluster(fileName, homeCluster)) {
+        return -1;
     }
 
     for (int i = 0; i < nameLen; i++)
@@ -84,7 +89,7 @@ FAT16_DirEnt FAT16::makeDir(char fileName[], int nameLen,
 
     dir.startingCluster = startCluster;
     writeDirEntToSector(dir, homeCluster);
-    return dir;
+    return 0;
 }
 
 void FAT16::ls(int homeCluster) {
@@ -156,7 +161,16 @@ void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
     buffer[offset + 3] = value & 0xFF;
 }
 
-
+FAT16_DirEnt FAT16::getDirEntFromSectorBuff(char FATSector[], u32 index){
+    FAT16_DirEnt dirEnt;
+    u32 byteOffset = index * sizeof(FAT16_DirEnt);
+    if (byteOffset > FAT16_SECTOR_SIZE) {
+        kprint("FAT16:Cannot read index from sector.  Too large\n");
+        return dirEnt;
+    }
+    memory_copy(FATSector + byteOffset, (char*)&dirEnt, sizeof(FAT16_DirEnt));
+    return dirEnt;
+}
 
 u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
     for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
@@ -169,6 +183,25 @@ u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
             return i;
     }
     return 0;
+}
+
+bool FAT16::fileExistsInCluster(char fileName[], u32 clusterNum) {
+    u32 nameLen = strlen(fileName);
+    if (nameLen > 8) {
+        kprint("FAT16: Filename must be less than 8 characters\n");
+        return true; //
+    }
+    for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
+        char FATSector[FAT16_SECTOR_SIZE];
+        readSector(clusterNum, sector, FATSector);
+        for (int i = 0; i < dirEntsPerSector; i++) {
+            FAT16_DirEnt dirEnt = getDirEntFromSectorBuff(FATSector, i);
+            if (strCmp(fileName, dirEnt.fileName) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 

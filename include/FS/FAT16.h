@@ -46,6 +46,7 @@ private:
     int numClusters;
     int numFATClusters;
     int startFAT;
+    int dirEntsPerSector;
 
     u32 rootCluster;
 
@@ -56,7 +57,7 @@ private:
     FAT16BPB BPB;
     typedef u32 FATEntry;
 
-    
+
     //////////////////////
     // Format the Drive //
     //////////////////////
@@ -72,8 +73,9 @@ private:
 
     //Make a dirent with filename that points to startCluster and
     //is written to homeCluster
-    FAT16_DirEnt makeDir(char fileName[], int nameLen, int startCluster, int homeCluster);
-    FAT16_DirEnt makeFile(char fileName[], int nameLen, int startCluster);
+    //Return -1 on failure
+    int makeDir(char fileName[], int nameLen, int startCluster, int homeCluster);
+    int makeFile(char fileName[], int nameLen, int startCluster);
     void ls(int homeCluster);
 
     int readSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
@@ -94,7 +96,7 @@ private:
     u32 getSectorOffsetForDirEnt(char FATSector[]);
     bool fileExistsInCluster(char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
-    
+    FAT16_DirEnt getDirEntFromSectorBuff(char FATSector[], u32 index);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////
