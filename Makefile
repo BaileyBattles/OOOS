@@ -37,6 +37,9 @@ run: kernel.elf
 run-iso: kernel.iso
 	qemu-system-i386 -cdrom '$<' -m 512
 
+storage.img:
+	dd if=/dev/zero of=drive/storage.img bs=1M count=1024
+
 # Used for debugging purposes
 kernel.elf: src/Boot/Entry.o ${OBJ}
 	i686-elf-ld -o $@ -T linker.ld $^ 
