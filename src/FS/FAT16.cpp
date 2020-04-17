@@ -7,29 +7,38 @@ FAT16::FAT16(FileDevice &theFileDevice) :
     FileSystem(theFileDevice) 
 {
     numEntriesPerSector = FAT16_SECTOR_SIZE / (sizeof(FATEntry) * 8);
+    u32 numEntriesPerCluster = numEntriesPerSector * SECTORS_PER_CLUSTER;
     numClusters = fileDevice->deviceSize() / (SECTORS_PER_CLUSTER * FAT16_SECTOR_SIZE);
+    numFATClusters = numClusters / numEntriesPerCluster;
+
+    rootCluster = numFATClusters + 1;
+
     startFAT = SECTORS_PER_CLUSTER * 1; //start in the second cluster
     if (numClusters > FAT16_MAX_CLUSTERS)
         numClusters = FAT16_MAX_CLUSTERS;
     //Eventually we won't want to format it every time
-    format();
+    format(false);
 }
 
-void FAT16::format() {
+void FAT16::format(bool eraseData) {
     char zeroSector[FAT16_SECTOR_SIZE];
     memory_set(zeroSector, '\0', FAT16_SECTOR_SIZE);
     int i;
     char buff[10];
 
-    // for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
-    //     int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
-    //     if (status == -1) {
-    //         kprint("EXT2.cpp:Failed to write sector\n");
-    //     }
-    // }
+    if (eraseData) {
+        for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
+            int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
+            if (status == -1) {
+                kprint("FAT16.cpp:Failed to write sector\n");
+            }
+        }
+    }
     
     writeBPB();
-    writeFAT();
+    //writeFAT();
+    createRootDir();
+    ls(rootCluster);
 }
 
 void FAT16::writeBPB() {
@@ -44,7 +53,11 @@ void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
     buffer[offset + 3] = value & 0xFF;
 }
 
-void FAT16::setEntry(FATEntry entry, u32 index){
+u32 FAT16::dirEntToU32(FAT16_DirEnt dirEnt) {
+
+}
+
+void FAT16::setFATEntry(FATEntry entry, u32 index){
     u32 sectorNum = (index / numEntriesPerSector) + startFAT;
     u32 offset = (index % numEntriesPerSector)*4;
     char FATSector[FAT16_SECTOR_SIZE];
@@ -54,13 +67,88 @@ void FAT16::setEntry(FATEntry entry, u32 index){
 }   
 
 void FAT16::writeFAT() {
-    setEntry(0xFFFFFFFF, 17);
-    char FATSector[FAT16_SECTOR_SIZE];
-    fileDevice->readSector(7, FATSector, 16);
-
+    setFATEntry(FAT16_RESERVED_CLUSTER, 0);
+    for (int i = 0; i < numFATClusters; i++) {
+        setFATEntry(FAT16_RESERVED_CLUSTER, i + 1);
+    }   
 }
 
-bool FAT16::isArchive(FAT16_DirEnt dirEnt){
+void FAT16::createRootDir() {
+    FAT16_DirEnt dot = makeDir(".", 1, rootCluster, rootCluster);  
+    FAT16_DirEnt doubleDot = makeDir("..", 2, rootCluster, rootCluster);
+    char FATSector[512];
+    fileDevice->readSector(rootCluster * 6, FATSector, 512);
+}
+
+u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
+    for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
+        bool isSpace = true;
+        for (int j = 0; j < sizeof(FAT16_DirEnt); j++) {
+            if (FATSector[i + j] != '\0')
+                isSpace = false;
+        }
+        if (isSpace)
+            return i;
+    }
+    return 0;
+}
+
+
+void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
+    char FATSector[FAT16_SECTOR_SIZE];
+    int start = clusterNum * SECTORS_PER_CLUSTER;
+    int end = start + SECTORS_PER_CLUSTER;
+    int offset = -1;
+    for (int sector = start; sector < end; sector++) {
+        fileDevice->readSector(sector, FATSector, FAT16_SECTOR_SIZE);
+        offset = getSectorOffsetForDirEnt(FATSector);
+        if (offset != -1){
+            memory_copy((char*)&dirEnt, FATSector + offset, sizeof(FAT16_DirEnt));
+            fileDevice->writeSector(sector, FATSector, FAT16_SECTOR_SIZE);
+            return;
+        }
+    }
+    if (offset == -1) {
+        kprint("FAT16:Cluster Full!  Can't make file");
+    }
+}
+
+FAT16_DirEnt FAT16::makeDir(char fileName[], int nameLen, 
+                            int startCluster, int homeCluster) {
+    FAT16_DirEnt dir;
+    memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
+    if (nameLen > 8) {
+        kprint("FAT16:Name can only be 8 chars");
+        return dir;
+    }
+
+    for (int i = 0; i < nameLen; i++)
+        dir.fileName[i] = fileName[i];
+    
+    setDir(dir);
+
+    dir.startingCluster = startCluster;
+    writeDirEntToSector(dir, homeCluster);
+    return dir;
+}
+
+void FAT16::ls(int homeCluster) {
+    u32 baseSector = homeCluster * SECTORS_PER_CLUSTER;
+    for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
+        char FATSector[FAT16_SECTOR_SIZE];
+        fileDevice->readSector(baseSector + sector, FATSector, FAT16_SECTOR_SIZE);
+        for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
+            FAT16_DirEnt entry;
+            memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
+            if (entry.fileName[0] != '\0') {
+                kprint(entry.fileName);
+                kprint("\n");
+            }
+        }
+    }
+}
+
+bool FAT16::isArchive(FAT16_DirEnt dirEnt) {
     return dirEnt.attribute & (1 << 5);
 }
 bool FAT16::isDir(FAT16_DirEnt dirEnt){
@@ -77,4 +165,23 @@ bool FAT16::isHidden(FAT16_DirEnt dirEnt){
 }
 bool FAT16::isReadOnly(FAT16_DirEnt dirEnt){
     return dirEnt.attribute & 1;
+}
+
+void FAT16::setArchive(FAT16_DirEnt &dirEnt) {
+    dirEnt.attribute |= (1 << 5);
+}
+void FAT16::setDir(FAT16_DirEnt &dirEnt){
+    dirEnt.attribute |= (1 << 4);
+}
+void FAT16::setVolumeID(FAT16_DirEnt &dirEnt){
+    dirEnt.attribute |= (1 << 3);
+}
+void FAT16::setSystem(FAT16_DirEnt &dirEnt){
+    dirEnt.attribute |= (1 << 2);
+}
+void FAT16::setHidden(FAT16_DirEnt &dirEnt){
+    dirEnt.attribute |= (1 << 1);
+}
+void FAT16::setReadOnly(FAT16_DirEnt &dirEnt){
+    dirEnt.attribute |= 1;
 }
