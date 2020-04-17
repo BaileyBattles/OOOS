@@ -29,3 +29,25 @@ int strlen(char buff[]) {
         len++;
     return len;
 }
+
+int strCmp(char string1[], char string2[]) {
+    int len1 = strlen(string1);
+    int len2 = strlen(string2);
+    int minLen = len1;
+    if (len2 < len1)
+        minLen = len2;
+    for (int i = 0; i < minLen; i++) {
+        if (string1[i] > string2[i]) {
+            return -1;
+        }
+        else if (string2[i] > string1[i]) {
+            return 1;
+        }
+    }
+    if (len1 > len2)
+        return -1;
+    else if (len2 > len1){
+        return 1;
+    }
+    return 0;
+}
