@@ -27,9 +27,10 @@ class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
 private:
+    int numEntriesPerSector;
     int numClusters;
+    int startFAT;
     typedef struct {
-
         char reserved[BPB_NUM_RESERVED];
     } FAT16BPB;
     FAT16BPB BPB;
@@ -49,8 +50,10 @@ private:
 
     void format();
     void writeBPB();
-    void writeFATs();
+    void writeFAT();
 
+    void setEntry(FATEntry entry, u32 index);
+    void setFourBytes(u32 value, char buffer[], u32 offset);
     //File Attributes
     bool isArchive(FAT16_DirEnt dirEnt);
     bool isDir(FAT16_DirEnt dirEnt);
