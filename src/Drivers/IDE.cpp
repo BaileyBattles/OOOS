@@ -18,6 +18,11 @@ IDE::IDE(u32 port) {
     controlPort = basePort + 0x206;
 }
 
+void IDE::waitBusy() {
+    while (inb(controlPort) & 0b10000000)
+        ;
+}
+
 void IDE::ideWait() {
     for (u32 i = 0; i < 4; i++) {
       inb(controlPort);
@@ -103,25 +108,20 @@ int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
     if (validSector(sectorNum) == -1)
         return -1;
 
-
     ideWait();
     setIDERegisters(sectorNum, 1);
     outb(commandPort, 0x20);
-    
-    //kprint("Reading IDE");
-
+    u16 dataBuf[256];
+    char buff[512];
     int index = 0;
     while (index < size) {
-        char text[3];
-        u16 data = inw(basePort);
-        text[0] = data & 0xFF;
+        waitBusy();
+        u16 data= inw(basePort);
+        buffer[index] = data & 0xFF;
         if (index + 1 < size)
-            text[1] = ((data & 0xFF00) >> 8);
-        text[2] = '\0';
-        kprint(text);
+            buffer[index + 1] = ((data & 0xFF00) >> 8);
         index += 2;
-    }
-
+    }    
     //Make sure you read all the data!!!!! 
     for (; index < 512; index += 2)
         inw(basePort);
@@ -129,6 +129,8 @@ int IDE::readSector(u32 sectorNum, char* buffer, u32 size){
 
     return 0;   
 }
+
+
 
 int IDE::validSector(u32 sectorNum) {
     if (sectorNum > 0xFFFFFFF) {
@@ -156,7 +158,7 @@ int IDE::writeSector(u32 sectorNum, char* buffer, u32 size) {
     outb(commandPort, 0x30);
 
     ideWait();
-    int index = 0;
+    int index;
     for(index = 0; index < size; index+= 2){
         u16 data = (buffer[index] & 0xFF);
         if (index + 1 < size)

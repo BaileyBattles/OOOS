@@ -19,12 +19,12 @@ void FAT16::format() {
     int i;
     char buff[10];
 
-    for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
-        int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
-        if (status == -1) {
-            kprint("EXT2.cpp:Failed to write sector\n");
-        }
-    }
+    // for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
+    //     int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
+    //     if (status == -1) {
+    //         kprint("EXT2.cpp:Failed to write sector\n");
+    //     }
+    // }
     
     writeBPB();
     writeFATs();
@@ -33,7 +33,11 @@ void FAT16::format() {
 void FAT16::writeBPB() {
     memory_set(BPB.reserved, '\0', FAT16_SECTOR_SIZE);
     fileDevice->writeSector(FAT16_BPB_SECTOR, (char*)&BPB, FAT16_SECTOR_SIZE);
-
+    char string[] = "My string for now\n";
+    char string2[18];
+    fileDevice->writeSector(6, string, 20);
+    fileDevice->readSector(6, string2, 17);
+    kprint(string2);
 }
 
 void FAT16::writeFATs() {

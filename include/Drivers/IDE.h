@@ -36,7 +36,7 @@ private:
     u16 info[256];
     IdInfo idInfo;
     
-
+    void waitBusy();
     void identify();
     void ideWait();
     void setIDERegisters(u32 sectorNum, u32 numSectors);
