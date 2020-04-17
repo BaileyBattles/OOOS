@@ -11,10 +11,12 @@ FAT16::FAT16(FileDevice &theFileDevice) :
     numClusters = fileDevice->deviceSize() / (SECTORS_PER_CLUSTER * FAT16_SECTOR_SIZE);
     numFATClusters = numClusters / numEntriesPerCluster;
 
-    rootCluster = numFATClusters + 1;
+    rootCluster = numFATClusters + 2;
+    nextAvailableCluster = rootCluster + 2;
+    memory_set(freedClusters, '\0', NUM_FREED_REMEMBERED);
     dirEntsPerSector = FAT16_SECTOR_SIZE / sizeof(FAT16_DirEnt);
 
-    startFAT = SECTORS_PER_CLUSTER * 1; //start in the second cluster
+    startFATSector = SECTORS_PER_CLUSTER * 1; //start in the second cluster
     if (numClusters > FAT16_MAX_CLUSTERS)
         numClusters = FAT16_MAX_CLUSTERS;
     //Eventually we won't want to format it every time
@@ -29,6 +31,7 @@ void FAT16::format(bool eraseData) {
     char buff[10];
 
     if (eraseData) {
+        kprint("Formatting drive...\n");
         for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
             int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
             if (status == -1) {
@@ -38,9 +41,13 @@ void FAT16::format(bool eraseData) {
     }
     
     writeBPB();
-    //writeFAT();
+    kprint("Writing FAT Table...\n");
+    writeFAT();
+    u32 nextCluster = popFreeCluster();
     createRootDir();
+    makeDir("dir1", 4, rootCluster);
     ls(rootCluster);
+    ls(3645);
 }
 
 //////////////////////
@@ -60,8 +67,7 @@ void FAT16::writeFAT() {
 }
 
 void FAT16::createRootDir() {
-    int dot = makeDir(".", 1, rootCluster, rootCluster);  
-    int doubleDot = makeDir("..", 2, rootCluster, rootCluster);
+    makeDotAndDoubleDot(rootCluster, rootCluster);
 }
 
 
@@ -69,8 +75,7 @@ void FAT16::createRootDir() {
 // Core Functionality //
 ////////////////////////
 
-int FAT16::makeDir(char fileName[], int nameLen, 
-                            int startCluster, int homeCluster) {
+int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
     FAT16_DirEnt dir;
     memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
     if (nameLen > 8) {
@@ -78,7 +83,7 @@ int FAT16::makeDir(char fileName[], int nameLen,
         return -1;
     }
 
-    if (fileExistsInCluster(fileName, homeCluster)) {
+    if (fileExistsInCluster(fileName, dirCluster)) {
         return -1;
     }
 
@@ -87,15 +92,17 @@ int FAT16::makeDir(char fileName[], int nameLen,
     
     setDir(dir);
 
-    dir.startingCluster = startCluster;
-    writeDirEntToSector(dir, homeCluster);
+    dir.startingCluster = popFreeCluster();
+    makeDotAndDoubleDot(dirCluster, dir.startingCluster);
+    writeDirEntToSector(dir, dirCluster);
+    setFATEntry(dirCluster, FAT16_DIR_CLUSTER);
     return 0;
 }
 
-void FAT16::ls(int homeCluster) {
+void FAT16::ls(int dirCluster) {
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
-        readSector(homeCluster, sector, FATSector);
+        readSector(dirCluster, sector, FATSector);
         for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
             FAT16_DirEnt entry;
             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
@@ -124,14 +131,18 @@ int FAT16::writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]){
 }
 
 void FAT16::setFATEntry(FATEntry entry, u32 index){
-    u32 sectorNum = (index / numEntriesPerSector) + startFAT;
+    u32 sectorNum = (index / numEntriesPerSector) + startFATSector;
     u32 offset = (index % numEntriesPerSector)*4;
     char FATSector[FAT16_SECTOR_SIZE];
     fileDevice->readSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
     setFourBytes(entry, FATSector, offset);
     fileDevice->writeSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
-}   
+}
 
+int FAT16::getFATSector(u32 FATSectorNum, char FATSector[]) {
+    u32 trueSectorNum = startFATSector + FATSectorNum;
+    return fileDevice->readSector(trueSectorNum, FATSector, FAT16_SECTOR_SIZE);
+}
 
 void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
     char FATSector[FAT16_SECTOR_SIZE];
@@ -153,6 +164,27 @@ void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
 //////////////////////
 // Helper Functions //
 //////////////////////
+
+int FAT16::makeDotAndDoubleDot(int parentCluster, int dirCluster) {
+    FAT16_DirEnt dot;
+    FAT16_DirEnt doubleDot;
+    memory_set(&dot, '\0', sizeof(FAT16_DirEnt));
+    memory_set(&doubleDot, '\0', sizeof(FAT16_DirEnt));
+    dot.fileName[0] = '.';
+    doubleDot.fileName[0] = '.';
+    doubleDot.fileName[1] = '.';
+    if (!fileExistsInCluster(".", dirCluster)) {
+        setDir(dot);
+        dot.startingCluster = dirCluster;
+        writeDirEntToSector(dot, dirCluster);
+    }
+    if (!fileExistsInCluster("..", dirCluster)) {
+        doubleDot.startingCluster = parentCluster;
+        setDir(doubleDot);
+        writeDirEntToSector(doubleDot, dirCluster);
+    }
+    setFATEntry(dirCluster, FAT16_DIR_CLUSTER);
+}
 
 void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
     buffer[offset] = (value >> 24) & 0xFF;
@@ -203,6 +235,21 @@ bool FAT16::fileExistsInCluster(char fileName[], u32 clusterNum) {
     }
     return false;
 }
+
+u32 FAT16::popFreeCluster() {
+    if (freedClusters[0] == '\0') {
+        nextAvailableCluster++;
+        return nextAvailableCluster - 1;
+    }
+    else {
+        int i = 0;
+        while (freedClusters[i] != '\0' && i < NUM_FREED_REMEMBERED)
+            i++;
+        u32 cluster = freedClusters[i - 1];
+        return cluster;
+    }
+}
+
 
 
 /////////////////////////

@@ -1,6 +1,9 @@
 #ifndef __FAT16_H__
 #define __FAT16_H__
 
+//TODO:
+//Make freedClusters a vector (when I make the vector class)
+
 #include "Drivers/FileDevice.h"
 #include "FS/FileSystem.h"
 
@@ -10,10 +13,13 @@
 #define NUMBER_FAT_COPIES 2
 #define ROOT_ENTRIES_COUNT 512
 
+#define NUM_FREED_REMEMBERED 250 //this is to limit ammount of memory usage
+
 #define FAT16_NUM_CLUSTERS_RESERVED 2
 #define FAT16_MAX_CLUSTERS 65536
 #define FAT16_AVAILABLE_CLUSTER 0x0
 #define FAT16_RESERVED_CLUSTER 0xFFF0
+#define FAT16_DIR_CLUSTER 0xFFF1
 #define FAT16_BAD_CLUSTER 0xFFF7
 #define FAT16_END_OF_FILE 0xFFF8
 
@@ -34,6 +40,18 @@ typedef struct {
     u32 fileSize;
 } FAT16_DirEnt;
 
+/*
+Definitions:
+    Filename: The last 8 bits of a path 
+        Example: For /directory1/file the filename is file
+    Path: The whole path
+        Example: For /directory1/file the path is /directory1/file
+    DirCluster:
+        The Cluster which contains Directory Entries within that directory
+
+*/
+
+
 class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
@@ -45,8 +63,11 @@ private:
     int numEntriesPerSector;
     int numClusters;
     int numFATClusters;
-    int startFAT;
+    int startFATSector;
     int dirEntsPerSector;
+
+    int nextAvailableCluster;
+    int freedClusters[NUM_FREED_REMEMBERED];
 
     u32 rootCluster;
 
@@ -74,13 +95,19 @@ private:
     //Make a dirent with filename that points to startCluster and
     //is written to homeCluster
     //Return -1 on failure
-    int makeDir(char fileName[], int nameLen, int startCluster, int homeCluster);
+    int makeDir(char fileName[], int nameLen, int dirCluster);
     int makeFile(char fileName[], int nameLen, int startCluster);
-    void ls(int homeCluster);
+    void ls(int dirCluster);
+
+    //////////////////////
+    // Device Interface //
+    //////////////////////
 
     int readSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
     int writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
     void setFATEntry(FATEntry entry, u32 index);
+    //Here FATSectorNum = 0 is the first sector in the FAT
+    int getFATSector(u32 FATSectorNum, char FATSector[]);
     //Given a directory entry, write it to disk
     void writeDirEntToSector(FAT16_DirEnt dirEnt, u32 sectorNum);
 
@@ -97,6 +124,12 @@ private:
     bool fileExistsInCluster(char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
     FAT16_DirEnt getDirEntFromSectorBuff(char FATSector[], u32 index);
+    u32 getDirCluster(char path[]);
+
+    //Search a cluster and remove it from the free list in memory 
+    u32 popFreeCluster();
+
+    int makeDotAndDoubleDot(int parentCluster, int dirCluster);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////
