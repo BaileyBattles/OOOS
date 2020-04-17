@@ -38,6 +38,10 @@ class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
 private:
+    //////////////////
+    // Data Members //
+    //////////////////
+
     int numEntriesPerSector;
     int numClusters;
     int numFATClusters;
@@ -48,26 +52,39 @@ private:
     typedef struct {
         char reserved[BPB_NUM_RESERVED];
     } FAT16BPB;
+
     FAT16BPB BPB;
-
-
-
     typedef u32 FATEntry;
+
+    
+    //////////////////////
+    // Format the Drive //
+    //////////////////////
 
     void format(bool eraseData);
     void writeBPB();
     void writeFAT();
     void createRootDir();
  
+    ////////////////////////
+    // Core Functionality //
+    ////////////////////////
+
     //Make a dirent with filename that points to startCluster and
     //is written to homeCluster
     FAT16_DirEnt makeDir(char fileName[], int nameLen, int startCluster, int homeCluster);
     FAT16_DirEnt makeFile(char fileName[], int nameLen, int startCluster);
-    
     void ls(int homeCluster);
+
+    int readSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
+    int writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
+    void setFATEntry(FATEntry entry, u32 index);
     //Given a directory entry, write it to disk
     void writeDirEntToSector(FAT16_DirEnt dirEnt, u32 sectorNum);
 
+    //////////////////////
+    // Helper Functions //
+    //////////////////////
 
     //Determine if there are 32 continuous free bytes in a sector
     //Returns -1 if there is no space
@@ -75,11 +92,13 @@ private:
     //Returns 1 if it should be places at FATSector + 32
     //Returns 2 if it should be placed at FATSector + 32*2 etc..
     u32 getSectorOffsetForDirEnt(char FATSector[]);
-
-    void setFATEntry(FATEntry entry, u32 index);
+    bool fileExistsInCluster(char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
-    u32 dirEntToU32(FAT16_DirEnt dirEnt);
-    //File Attributes
+    
+    ///////////////////////
+    // DirEnt Operations //
+    ///////////////////////
+
     bool isArchive(FAT16_DirEnt dirEnt);
     bool isDir(FAT16_DirEnt dirEnt);
     bool isVolumeID(FAT16_DirEnt dirEnt);

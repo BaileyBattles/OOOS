@@ -20,6 +20,7 @@ FAT16::FAT16(FileDevice &theFileDevice) :
     format(false);
 }
 
+
 void FAT16::format(bool eraseData) {
     char zeroSector[FAT16_SECTOR_SIZE];
     memory_set(zeroSector, '\0', FAT16_SECTOR_SIZE);
@@ -41,30 +42,14 @@ void FAT16::format(bool eraseData) {
     ls(rootCluster);
 }
 
+//////////////////////
+// Format Functions //
+//////////////////////
+
 void FAT16::writeBPB() {
     memory_set(BPB.reserved, '\0', FAT16_SECTOR_SIZE);
     fileDevice->writeSector(FAT16_BPB_SECTOR, (char*)&BPB, FAT16_SECTOR_SIZE);
 }
-
-void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
-    buffer[offset] = (value >> 24) & 0xFF;
-    buffer[offset + 1] = (value >> 16) & 0xFF;
-    buffer[offset + 2] = (value >> 8) & 0xFF;
-    buffer[offset + 3] = value & 0xFF;
-}
-
-u32 FAT16::dirEntToU32(FAT16_DirEnt dirEnt) {
-
-}
-
-void FAT16::setFATEntry(FATEntry entry, u32 index){
-    u32 sectorNum = (index / numEntriesPerSector) + startFAT;
-    u32 offset = (index % numEntriesPerSector)*4;
-    char FATSector[FAT16_SECTOR_SIZE];
-    fileDevice->readSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
-    setFourBytes(entry, FATSector, offset);
-    fileDevice->writeSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
-}   
 
 void FAT16::writeFAT() {
     setFATEntry(FAT16_RESERVED_CLUSTER, 0);
@@ -76,42 +61,12 @@ void FAT16::writeFAT() {
 void FAT16::createRootDir() {
     FAT16_DirEnt dot = makeDir(".", 1, rootCluster, rootCluster);  
     FAT16_DirEnt doubleDot = makeDir("..", 2, rootCluster, rootCluster);
-    char FATSector[512];
-    fileDevice->readSector(rootCluster * 6, FATSector, 512);
-}
-
-u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
-    for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
-        bool isSpace = true;
-        for (int j = 0; j < sizeof(FAT16_DirEnt); j++) {
-            if (FATSector[i + j] != '\0')
-                isSpace = false;
-        }
-        if (isSpace)
-            return i;
-    }
-    return 0;
 }
 
 
-void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
-    char FATSector[FAT16_SECTOR_SIZE];
-    int start = clusterNum * SECTORS_PER_CLUSTER;
-    int end = start + SECTORS_PER_CLUSTER;
-    int offset = -1;
-    for (int sector = start; sector < end; sector++) {
-        fileDevice->readSector(sector, FATSector, FAT16_SECTOR_SIZE);
-        offset = getSectorOffsetForDirEnt(FATSector);
-        if (offset != -1){
-            memory_copy((char*)&dirEnt, FATSector + offset, sizeof(FAT16_DirEnt));
-            fileDevice->writeSector(sector, FATSector, FAT16_SECTOR_SIZE);
-            return;
-        }
-    }
-    if (offset == -1) {
-        kprint("FAT16:Cluster Full!  Can't make file");
-    }
-}
+////////////////////////
+// Core Functionality //
+////////////////////////
 
 FAT16_DirEnt FAT16::makeDir(char fileName[], int nameLen, 
                             int startCluster, int homeCluster) {
@@ -133,10 +88,9 @@ FAT16_DirEnt FAT16::makeDir(char fileName[], int nameLen,
 }
 
 void FAT16::ls(int homeCluster) {
-    u32 baseSector = homeCluster * SECTORS_PER_CLUSTER;
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
-        fileDevice->readSector(baseSector + sector, FATSector, FAT16_SECTOR_SIZE);
+        readSector(homeCluster, sector, FATSector);
         for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
             FAT16_DirEnt entry;
             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
@@ -147,6 +101,80 @@ void FAT16::ls(int homeCluster) {
         }
     }
 }
+
+//////////////////////////
+// FileDevice Interface //
+//////////////////////////
+
+// Read sector number clusterNum * SECTORS_PER_CLUSTER + sectorOffset
+int FAT16::readSector(u32 clusterNum, u32 sectorOffset, char FATSector[]){
+    u32 sector = clusterNum * SECTORS_PER_CLUSTER + sectorOffset;
+    return fileDevice->readSector(sector, FATSector, FAT16_SECTOR_SIZE);
+}
+
+// Write sector number clusterNum * SECTORS_PER_CLUSTER + sectorOffset
+int FAT16::writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]){
+    u32 sector = clusterNum * SECTORS_PER_CLUSTER + sectorOffset;
+    return fileDevice->writeSector(sector, FATSector, FAT16_SECTOR_SIZE);
+}
+
+void FAT16::setFATEntry(FATEntry entry, u32 index){
+    u32 sectorNum = (index / numEntriesPerSector) + startFAT;
+    u32 offset = (index % numEntriesPerSector)*4;
+    char FATSector[FAT16_SECTOR_SIZE];
+    fileDevice->readSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
+    setFourBytes(entry, FATSector, offset);
+    fileDevice->writeSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
+}   
+
+
+void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
+    char FATSector[FAT16_SECTOR_SIZE];
+    int offset = -1;
+    for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
+        readSector(clusterNum, sector, FATSector);
+        offset = getSectorOffsetForDirEnt(FATSector);
+        if (offset != -1){
+            memory_copy((char*)&dirEnt, FATSector + offset, sizeof(FAT16_DirEnt));
+            writeSector(clusterNum, sector, FATSector);
+            return;
+        }
+    }
+    if (offset == -1) {
+        kprint("FAT16:Cluster Full!  Can't make file");
+    }
+}
+
+//////////////////////
+// Helper Functions //
+//////////////////////
+
+void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
+    buffer[offset] = (value >> 24) & 0xFF;
+    buffer[offset + 1] = (value >> 16) & 0xFF;
+    buffer[offset + 2] = (value >> 8) & 0xFF;
+    buffer[offset + 3] = value & 0xFF;
+}
+
+
+
+u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
+    for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
+        bool isSpace = true;
+        for (int j = 0; j < sizeof(FAT16_DirEnt); j++) {
+            if (FATSector[i + j] != '\0')
+                isSpace = false;
+        }
+        if (isSpace)
+            return i;
+    }
+    return 0;
+}
+
+
+/////////////////////////
+// DirEnt Manipulation //
+/////////////////////////
 
 bool FAT16::isArchive(FAT16_DirEnt dirEnt) {
     return dirEnt.attribute & (1 << 5);
