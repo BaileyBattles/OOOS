@@ -1,11 +1,12 @@
-C_SOURCES = $(wildcard src/Kernel/*.cpp   \
-					   src/Drivers/*.cpp  \
-					   src/CPU/*.cpp      \
-					   src/FS/*.cpp       \
-					   src/Sys/*.cpp      \
-					   src/Util/*.cpp     \
-					   src/Memory/*.cpp   \
-					   src/Lib/*.cpp      \
+C_SOURCES = $(wildcard src/Kernel/*.cpp       \
+					   src/Drivers/*.cpp      \
+					   src/CPU/*.cpp          \
+					   src/FS/*.cpp           \
+					   src/Sys/*.cpp          \
+					   src/Util/*.cpp         \
+					   src/Memory/*.cpp       \
+					   src/Lib/*.cpp          \
+					   src/Lib/stdlib/*.cpp   \
 					   )
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.cpp=.o    \
@@ -70,4 +71,5 @@ clean:
 		   src/Sys/*.o \
 		   src/FS/*.o \
 		   src/Lib/*.o \
+		   src/Lib/stdlib/*.o \
 		   iso

@@ -5,7 +5,7 @@
 
 class Device {
 public:
-    virtual void initialize();
-    virtual void handleInterrupt(registers_t r);
+    virtual void initialize()=0;
+    virtual void handleInterrupt(registers_t r)=0;
 };
 #endif

@@ -6,13 +6,13 @@
 
 class FileDevice : public Device {
 public:
-    virtual void initialize();
-    virtual void handleInterrupt(registers_t r);
-    virtual int readSector(u32 sectorNum, char* buffer, u32 size);
-    virtual int writeSector(u32 sectorNum, char* buffer, u32 size);
+    virtual void initialize()=0;
+    virtual void handleInterrupt(registers_t r)=0;
+    virtual int readSector(u32 sectorNum, char* buffer, u32 size)=0;
+    virtual int writeSector(u32 sectorNum, char* buffer, u32 size)=0;
 
-    virtual int deviceSize();
-    virtual int sectorSize();
+    virtual int deviceSize()=0;
+    virtual int sectorSize()=0;
 };
 
 #endif
