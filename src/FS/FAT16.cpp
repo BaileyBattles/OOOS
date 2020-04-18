@@ -45,12 +45,9 @@ void FAT16::format(bool eraseData) {
     //writeFAT();
     u32 nextCluster = popFreeCluster();
     createRootDir();
-    makeDirInCluster("dir1", 4, rootCluster);
-    listCluster(rootCluster, "/");
-    listCluster(3645, "/dir1/");
-    ls("/Dir1/Dir2");
-    kprint("\n");
-    getDirCluster("dir1", 4, rootCluster);
+    mkdir("/Dir1");
+    mkdir("/Dir1/Dir2");
+    ls("/Dir1");
 }
 
 //////////////////////
@@ -79,13 +76,21 @@ void FAT16::createRootDir() {
 // Core Functionality //
 ////////////////////////
 
-// int FAT16::mkdir(char filename[]) {
-//     return mkfile(filename, true);
-// }
+int FAT16::mkdir(const char path[]) {
+    return mkfile(path, true);
+}
 
-// int FAT16::mkfile
+int FAT16::mkfile(const char path[], bool isDir) {
+    KVector<char*> pathList = getPathList(path, strlen(path));
+    int currCluster = rootCluster;
+    for (int i = 0; i < pathList.size() - 1; i++) {
+        currCluster = getDirCluster(pathList.get(i), strlen(pathList.get(i)), currCluster);
+    }
+    makeFileInCluster(pathList.get(pathList.size() - 1), currCluster, isDir);
+}
 
-int FAT16::makeDirInCluster(const char fileName[], int nameLen, int dirCluster) {
+int FAT16::makeFileInCluster(const char fileName[], int dirCluster, bool isDir) {
+    int nameLen = strlen(fileName);
     FAT16_DirEnt dir;
     memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
     if (nameLen > FAT16_MAX_NAME_LEN) {
@@ -100,7 +105,8 @@ int FAT16::makeDirInCluster(const char fileName[], int nameLen, int dirCluster) 
     for (int i = 0; i < nameLen; i++)
         dir.fileName[i] = fileName[i];
     
-    setDir(dir);
+    if (isDir)
+        setDir(dir);
 
     dir.startingCluster = popFreeCluster();
     makeDotAndDoubleDot(dirCluster, dir.startingCluster);
@@ -114,13 +120,12 @@ void FAT16::ls(const char path[]) {
     KVector<char*> pathList = getPathList(path, length);
     int currCluster = rootCluster;
     for (int i = 0; i < pathList.size(); i++) {
-        kprint(pathList.get(i));
-        kprint("\n");
+        currCluster = getDirCluster(pathList.get(i), strlen(pathList.get(i)), currCluster);
     }
-    kprint("\n");
+    listCluster(currCluster);
 }
 
-void FAT16::listCluster(int dirCluster, const char path[]) {
+void FAT16::listCluster(int dirCluster) {
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
         readSector(dirCluster, sector, FATSector);
@@ -128,7 +133,6 @@ void FAT16::listCluster(int dirCluster, const char path[]) {
             FAT16_DirEnt entry;
             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
             if (entry.fileName[0] != '\0') {
-                kprint(path);
                 kprint(entry.fileName);
                 kprint("\n");
             }
@@ -307,7 +311,7 @@ int FAT16::getDirCluster(const char dirName[], int pathLength, int parentCluster
             //     kprint("\n");
             // }
             if (strCmp(entry.fileName, dirName) == 0) {
-                kprint(entry.fileName);
+                return entry.startingCluster;
             }
         }
     }

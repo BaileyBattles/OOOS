@@ -59,7 +59,6 @@ Definitions:
 class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
-    KVector<char*> getPathList(const char path[], int pathLength);
 
 private:
     //////////////////
@@ -102,13 +101,14 @@ private:
     //is written to homeCluster
     //Return -1 on failure
 
-    int mkdir(const char filename[]);
-    int mkfile(const char filename[], bool isDir);
-    int makeDirInCluster(const char fileName[], int nameLen, int dirCluster);
+    int mkdir(const char path[]);
+    int mkfile(const char path[], bool isDir);
+    int makeFileInCluster(const char fileName[], int dirCluster, bool isDir);
     int makeFile(const char fileName[], int nameLen, int startCluster);
     void ls(const char path[]);
-    void listCluster(int dirCluster, const char path[]);
+    void listCluster(int dirCluster);
 
+    KVector<char*> getPathList(const char path[], int pathLength);
     //////////////////////
     // Device Interface //
     //////////////////////
