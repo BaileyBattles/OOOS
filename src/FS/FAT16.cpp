@@ -41,13 +41,12 @@ void FAT16::format(bool eraseData) {
     }
     
     writeBPB();
-    kprint("Writing FAT Table...\n");
-    writeFAT();
+    //writeFAT();
     u32 nextCluster = popFreeCluster();
     createRootDir();
     makeDir("dir1", 4, rootCluster);
-    ls(rootCluster);
-    ls(3645);
+    listCluster(rootCluster, "/");
+    listCluster(3645, "/dir1/");
 }
 
 //////////////////////
@@ -60,6 +59,7 @@ void FAT16::writeBPB() {
 }
 
 void FAT16::writeFAT() {
+    kprint("Writing FAT Table...\n");
     setFATEntry(FAT16_RESERVED_CLUSTER, 0);
     for (int i = 0; i < numFATClusters; i++) {
         setFATEntry(FAT16_RESERVED_CLUSTER, i + 1);
@@ -99,7 +99,7 @@ int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
     return 0;
 }
 
-void FAT16::ls(int dirCluster) {
+void FAT16::listCluster(int dirCluster, char path[]) {
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
         readSector(dirCluster, sector, FATSector);
@@ -107,6 +107,7 @@ void FAT16::ls(int dirCluster) {
             FAT16_DirEnt entry;
             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
             if (entry.fileName[0] != '\0') {
+                kprint(path);
                 kprint(entry.fileName);
                 kprint("\n");
             }

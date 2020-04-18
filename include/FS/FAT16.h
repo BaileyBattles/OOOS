@@ -97,7 +97,8 @@ private:
     //Return -1 on failure
     int makeDir(char fileName[], int nameLen, int dirCluster);
     int makeFile(char fileName[], int nameLen, int startCluster);
-    void ls(int dirCluster);
+    void ls(char path[]);
+    void listCluster(int dirCluster, char path[]);
 
     //////////////////////
     // Device Interface //
