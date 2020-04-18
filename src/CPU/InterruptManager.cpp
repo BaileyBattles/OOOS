@@ -1,4 +1,5 @@
 #include "CPU/InterruptConstants.h"
+#include "CPU/InterruptHandlingObject.h"
 #include "CPU/InterruptManager.h"
 #include "CPU/Idt.h"
 #include "Drivers/Device.h"
@@ -7,7 +8,8 @@
 #include "Util/String.h"
 #include "Util/Memcpy.h"
 
-Device *interruptHandlers[256];
+InterruptHandlingObject *isrHandlers[256];
+InterruptHandlingObject *irqHandlers[256];
 
 ///////////////////////
 // Interrupt Manager //
@@ -110,15 +112,26 @@ void InterruptManager::setupIrqGates(){
     interruptHandlers which is an array of function pointers
 */
 
-void handleInterrupt(registers_t r){
-    if(interruptHandlers[r.int_no] != 0)
-        interruptHandlers[r.int_no]->handleInterrupt(r);
+void handleISR(registers_t r){
+    if(isrHandlers[r.int_no] != 0)
+        isrHandlers[r.int_no]->handleInterrupt(r);
+}
+
+void handleIRQ(registers_t r){
+    if(irqHandlers[r.int_no] != 0)
+        irqHandlers[r.int_no]->handleInterrupt(r);
 }
 
 // Interrupts should be registered to the value
 // returned in r.int_no
-void registerHandler(Device *handler, int num){
-    interruptHandlers[num] = handler;
+void registerISRHandler(InterruptHandlingObject *handler, int num){
+    isrHandlers[num] = handler;
+}
+
+// Interrupts should be registered to the value
+// returned in r.int_no
+void registerIRQHandler(InterruptHandlingObject *handler, int num){
+    irqHandlers[num] = handler;
 }
 
 
@@ -131,11 +144,12 @@ void registerHandler(Device *handler, int num){
 */
 
 extern "C" void isr_handler(registers_t r) {
-    kprint("received interrupt: ");
-    char s[3];
-    int_to_ascii(r.int_no, s);
-    kprint(s);
-    kprint("\n");
+    // kprint("received interrupt: ");
+    // char s[3];
+    // int_to_ascii(r.int_no, s);
+    // kprint(s);
+    // kprint("\n");
+    handleISR(r);
 }
 
 extern "C" void irq_handler(registers_t r) {
@@ -152,7 +166,7 @@ extern "C" void irq_handler(registers_t r) {
     // kprint("\n");
 
     //Call associated interrupt handler
-    handleInterrupt(r);
+    handleIRQ(r);
 }
 
 

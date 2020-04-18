@@ -4,6 +4,7 @@
 #include "Kernel/Types.h"
 
 class Device;
+class InterruptHandlingObject;
 
 /* Struct which aggregates many registers */
 typedef struct {
@@ -14,8 +15,10 @@ typedef struct {
 } registers_t;
 
 typedef void (*InterruptHandler)(registers_t);
-void registerHandler(Device *handler, int num);
-void handleInterrupt(registers_t r);
+void registerISRHandler(InterruptHandlingObject *handler, int num);
+void registerIRQHandler(InterruptHandlingObject *handler, int num);
+void handleISR(registers_t r);
+void handleIRQ(registers_t r);
 
 class InterruptManager{
 public:

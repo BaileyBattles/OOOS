@@ -1,3 +1,4 @@
+#include "CPU/InterruptManager.h"
 #include "Drivers/Screen.h"
 #include "Util/String.h"
 #include "Kernel/Types.h"
@@ -95,7 +96,7 @@ u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
     for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
         if (currentAddress == 0x30000000) {
             setPTEBaseAddress(pageTable.entry[i], 0x800000);
-            setPTEPresent(pageTable.entry[i]);
+            //setPTEPresent(pageTable.entry[i]);
         }
         else {
             setPTEBaseAddress(pageTable.entry[i], currentAddress);
@@ -127,12 +128,17 @@ void PageTableManager::initialize() {
     u32 val = read_cr0();
     write_cr3((u32)pageDirectoryPtr);
     initialize_cr0();
+    registerISRHandler(this, 14);
 
-    u32 *ptr = (u32*)0x30000002;
-    *ptr = 25;
-    u32 value = *ptr;
+    // u32 *ptr = (u32*)0x30000002;
+    // *ptr = 25;
+    // u32 value = *ptr;
 
-    u32 e = physicalAddress((u32)ptr);
+    // u32 e = physicalAddress((u32)ptr);
+}
+
+void PageTableManager::handleInterrupt(registers_t r) {
+    kprint("Page Fault\n");
 }
 
 PageTableEntry PageTableManager::getPageTableEntry(u32 address) {

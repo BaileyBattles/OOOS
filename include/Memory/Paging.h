@@ -1,6 +1,8 @@
 #ifndef __PAGING_H__
 #define __PAGING_H__
 
+#include "CPU/InterruptHandlingObject.h"
+#include "CPU/InterruptManager.h"
 #include "Kernel/Types.h"
 
 //THIS IS TERRIBLE!!!!
@@ -56,9 +58,10 @@ int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress);
 
 #define PTM PageTableManager::the()
 
-class PageTableManager {
+class PageTableManager : public InterruptHandlingObject{
 public:
-    void initialize();
+    virtual void initialize();
+    virtual void handleInterrupt(registers_t r);
     static PageTableManager& the() {
         static PageTableManager instance;
         return instance;

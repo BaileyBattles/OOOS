@@ -11,8 +11,7 @@ Keyboard::Keyboard()
 
 void Keyboard::initialize()
 {
-    registerHandler(this, 33);
-
+    registerIRQHandler(this, 33);
 }
 
 char Keyboard::accountForShift(char input) {
