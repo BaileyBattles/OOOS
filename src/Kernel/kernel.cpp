@@ -6,6 +6,7 @@
 #include "Drivers/Screen.h"
 #include "FS/FAT16.h"
 #include "FS/FileSystem.h"
+#include "FS/VFS.h"
 #include "Kernel/Multiboot.h"
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
@@ -82,8 +83,8 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     FileSystem *fileSystem = (FileSystem*)&f16;
     fileSystem->mkdir("/Dir1");
     fileSystem->mkdir("/Dir1/Dir2");
-    fileSystem->ls("/Dir1");
-
+    // fileSystem->ls("/Dir1");
+    VFS.mount(*fileSystem, 'A');
 
     kernelLoop();
 
