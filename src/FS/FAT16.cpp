@@ -45,10 +45,12 @@ void FAT16::format(bool eraseData) {
     //writeFAT();
     u32 nextCluster = popFreeCluster();
     createRootDir();
-    makeDir("dir1", 4, rootCluster);
+    makeDirInCluster("dir1", 4, rootCluster);
     listCluster(rootCluster, "/");
     listCluster(3645, "/dir1/");
     ls("/Dir1/Dir2");
+    kprint("\n");
+    getDirCluster("dir1", 4, rootCluster);
 }
 
 //////////////////////
@@ -77,7 +79,13 @@ void FAT16::createRootDir() {
 // Core Functionality //
 ////////////////////////
 
-int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
+// int FAT16::mkdir(char filename[]) {
+//     return mkfile(filename, true);
+// }
+
+// int FAT16::mkfile
+
+int FAT16::makeDirInCluster(const char fileName[], int nameLen, int dirCluster) {
     FAT16_DirEnt dir;
     memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
     if (nameLen > FAT16_MAX_NAME_LEN) {
@@ -101,16 +109,18 @@ int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
     return 0;
 }
 
-void FAT16::ls(char path[]) {
+void FAT16::ls(const char path[]) {
     int length = strlen(path);
     KVector<char*> pathList = getPathList(path, length);
+    int currCluster = rootCluster;
     for (int i = 0; i < pathList.size(); i++) {
         kprint(pathList.get(i));
         kprint("\n");
     }
+    kprint("\n");
 }
 
-void FAT16::listCluster(int dirCluster, char path[]) {
+void FAT16::listCluster(int dirCluster, const char path[]) {
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
         readSector(dirCluster, sector, FATSector);
@@ -205,7 +215,7 @@ void FAT16::setFourBytes(u32 value, char buffer[], u32 offset) {
     buffer[offset + 3] = value & 0xFF;
 }
 
-FAT16_DirEnt FAT16::getDirEntFromSectorBuff(char FATSector[], u32 index){
+FAT16_DirEnt FAT16::getDirEntFromSectorBuff(const char FATSector[], u32 index){
     FAT16_DirEnt dirEnt;
     u32 byteOffset = index * sizeof(FAT16_DirEnt);
     if (byteOffset > FAT16_SECTOR_SIZE) {
@@ -216,7 +226,7 @@ FAT16_DirEnt FAT16::getDirEntFromSectorBuff(char FATSector[], u32 index){
     return dirEnt;
 }
 
-u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
+u32 FAT16::getSectorOffsetForDirEnt(const char FATSector[]) {
     for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
         bool isSpace = true;
         for (int j = 0; j < sizeof(FAT16_DirEnt); j++) {
@@ -229,7 +239,7 @@ u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
     return 0;
 }
 
-bool FAT16::fileExistsInCluster(char fileName[], u32 clusterNum) {
+bool FAT16::fileExistsInCluster(const char fileName[], u32 clusterNum) {
     u32 nameLen = strlen(fileName);
     if (nameLen > FAT16_MAX_NAME_LEN) {
         kprint("FAT16: Filename must be less than 8 characters\n");
@@ -262,7 +272,7 @@ u32 FAT16::popFreeCluster() {
     }
 }
 
-KVector<char*> FAT16::getPathList(char path[], int pathLength) {
+KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
     int index = 1; //pass the first slash in the root directory
     KVector<char*> vector;
     while (index < pathLength) {
@@ -285,21 +295,23 @@ KVector<char*> FAT16::getPathList(char path[], int pathLength) {
     return vector; 
 }
 
-// int FAT16::getDirCluster(char path[], int pathLength){
-//     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
-//         char FATSector[FAT16_SECTOR_SIZE];
-//         readSector(dirCluster, sector, FATSector);
-//         for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
-//             FAT16_DirEnt entry;
-//             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
-//             if (entry.fileName[0] != '\0') {
-//                 kprint(path);
-//                 kprint(entry.fileName);
-//                 kprint("\n");
-//             }
-//         }
-//     }
-// }
+int FAT16::getDirCluster(const char dirName[], int pathLength, int parentCluster){
+    for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
+        char FATSector[FAT16_SECTOR_SIZE];
+        readSector(parentCluster, sector, FATSector);
+        for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
+            FAT16_DirEnt entry;
+            memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
+            // if (entry.fileName[0] != '\0') {
+            //     kprint(entry.fileName);
+            //     kprint("\n");
+            // }
+            if (strCmp(entry.fileName, dirName) == 0) {
+                kprint(entry.fileName);
+            }
+        }
+    }
+}
 
 
 /////////////////////////

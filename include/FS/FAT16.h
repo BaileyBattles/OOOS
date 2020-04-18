@@ -59,7 +59,7 @@ Definitions:
 class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
-    KVector<char*> getPathList(char path[], int pathLength);
+    KVector<char*> getPathList(const char path[], int pathLength);
 
 private:
     //////////////////
@@ -82,7 +82,7 @@ private:
     } FAT16BPB;
 
     FAT16BPB BPB;
-    typedef u32 FATEntry;
+    typedef u16 FATEntry;
 
 
     //////////////////////
@@ -101,10 +101,13 @@ private:
     //Make a dirent with filename that points to startCluster and
     //is written to homeCluster
     //Return -1 on failure
-    int makeDir(char fileName[], int nameLen, int dirCluster);
-    int makeFile(char fileName[], int nameLen, int startCluster);
-    void ls(char path[]);
-    void listCluster(int dirCluster, char path[]);
+
+    int mkdir(const char filename[]);
+    int mkfile(const char filename[], bool isDir);
+    int makeDirInCluster(const char fileName[], int nameLen, int dirCluster);
+    int makeFile(const char fileName[], int nameLen, int startCluster);
+    void ls(const char path[]);
+    void listCluster(int dirCluster, const char path[]);
 
     //////////////////////
     // Device Interface //
@@ -127,10 +130,10 @@ private:
     //Returns 0 if it should be places at FATSector + 0
     //Returns 1 if it should be places at FATSector + 32
     //Returns 2 if it should be placed at FATSector + 32*2 etc..
-    u32 getSectorOffsetForDirEnt(char FATSector[]);
-    bool fileExistsInCluster(char fileName[], u32 clusterNum);
+    u32 getSectorOffsetForDirEnt(const char FATSector[]);
+    bool fileExistsInCluster(const char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
-    FAT16_DirEnt getDirEntFromSectorBuff(char FATSector[], u32 index);
+    FAT16_DirEnt getDirEntFromSectorBuff(const char FATSector[], u32 index);
 
     //Search a cluster and remove it from the free list in memory 
     u32 popFreeCluster();
@@ -139,7 +142,7 @@ private:
     //get the cluster of the DirEnt containing the file
 
     //Example /dir1/dir2/dir3 would return dir2's cluster
-    int getDirCluster(char path[], int pathLength);
+    int getDirCluster(const char path[], int pathLength, int parentCluster);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////

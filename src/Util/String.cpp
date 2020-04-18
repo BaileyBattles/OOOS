@@ -23,14 +23,14 @@ char *int_to_ascii(int num, char buffer[]) {
     return buffer;
 }
 
-int strlen(char buff[]) {
+int strlen(const char buff[]) {
     int len = 0;
     for(; *buff != '\0'; buff++)
         len++;
     return len;
 }
 
-int strCmp(char string1[], char string2[]) {
+int strCmp(const char string1[], const char string2[]) {
     int len1 = strlen(string1);
     int len2 = strlen(string2);
     int minLen = len1;

@@ -20,7 +20,7 @@ int get_offset_col(int offset);
  * Print a message on the specified location
  * If col, row, are negative, we will use the current offset
  */
-void kprint_at(char *message, int col, int row) {
+void kprint_at(const char *message, int col, int row) {
     /* Set cursor if col/row are negative */
     int offset;
     if (col >= 0 && row >= 0)
@@ -41,7 +41,7 @@ void kprint_at(char *message, int col, int row) {
     }
 }
 
-void kprint(char *message) {
+void kprint(const char *message) {
     kprint_at(message, -1, -1);
 }
 
@@ -87,7 +87,7 @@ int print_char(char c, int col, int row, char attr) {
     if (offset >= MAX_ROWS * MAX_COLS * 2) {
         int i;
         for (i = 1; i < MAX_ROWS; i++) 
-            memory_copy(get_offset(0, i) + VIDEO_ADDRESS,
+            memory_copy((const char *)(get_offset(0, i) + VIDEO_ADDRESS),
                         get_offset(0, i-1) + VIDEO_ADDRESS,
                         MAX_COLS * 2);
 
