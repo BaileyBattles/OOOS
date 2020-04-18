@@ -24,52 +24,29 @@ FAT16::FAT16(FileDevice &theFileDevice) :
     format(false);
 }
 
+//////////////////////////
+// FileSystem Interface //
+//////////////////////////
 
-void FAT16::format(bool eraseData) {
-    char zeroSector[FAT16_SECTOR_SIZE];
-    memory_set(zeroSector, '\0', FAT16_SECTOR_SIZE);
-    int i;
-    char buff[10];
-
-    if (eraseData) {
-        kprint("Formatting drive...\n");
-        for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
-            int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
-            if (status == -1) {
-                kprint("FAT16.cpp:Failed to write sector\n");
-            }
-        }
+int FAT16::mkdir(const char path[]) {
+    KVector<char*> pathList = getPathList(path, strlen(path));
+    int cluster = followPath(path, pathList.size() - 1);
+    if (cluster == -1) {
+        return -1;
     }
-    
-    writeBPB();
-    writeFAT();
-    u32 nextCluster = popFreeCluster();
-    createRootDir();
-    mkdir("/Dir1");
-    mkdir("/Dir1/Dir2");
-    ls("/Dir1");
+    makeDirInCluster(pathList.get(pathList.size() - 1), cluster);
+    return 0;
 }
 
-//////////////////////
-// Format Functions //
-//////////////////////
-
-void FAT16::writeBPB() {
-    memory_set(BPB.reserved, '\0', FAT16_SECTOR_SIZE);
-    fileDevice->writeSector(FAT16_BPB_SECTOR, (char*)&BPB, FAT16_SECTOR_SIZE);
+int FAT16::ls(const char path[]) {
+    KVector<char*> pathList = getPathList(path, strlen(path));
+    int cluster = followPath(path, pathList.size());
+    if (cluster == -1)
+        return -1;
+    listCluster(cluster);
+    return 0;
 }
 
-void FAT16::writeFAT() {
-    kprint("Writing FAT Table...\n");
-    setFATEntry(FAT16_RESERVED_CLUSTER, 0);
-    for (int i = 0; i < numFATClusters; i++) {
-        setFATEntry(FAT16_RESERVED_CLUSTER, i + 1);
-    }   
-}
-
-void FAT16::createRootDir() {
-    makeDotAndDoubleDot(rootCluster, rootCluster);
-}
 
 
 ////////////////////////
@@ -92,15 +69,7 @@ int FAT16::followPath(const char path[], int pathLength) {
     return currCluster;
 }
 
-int FAT16::mkdir(const char path[]) {
-    KVector<char*> pathList = getPathList(path, strlen(path));
-    int cluster = followPath(path, pathList.size() - 1);
-    if (cluster == -1) {
-        return -1;
-    }
-    makeDirInCluster(pathList.get(pathList.size() - 1), cluster);
-    return 0;
-}
+
 
 int FAT16::mkfile(const char path[], bool isDir) {
 
@@ -145,15 +114,6 @@ int FAT16::makeDirInCluster(const char fileName[], int dirCluster) {
     return 0;
 }
 
-int FAT16::ls(const char path[]) {
-    KVector<char*> pathList = getPathList(path, strlen(path));
-    int cluster = followPath(path, pathList.size());
-    if (cluster == -1)
-        return -1;
-    listCluster(cluster);
-    return 0;
-}
-
 void FAT16::listCluster(int dirCluster) {
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
@@ -168,6 +128,10 @@ void FAT16::listCluster(int dirCluster) {
         }
     }
 }
+
+
+
+
 
 //////////////////////////
 // FileDevice Interface //
@@ -215,6 +179,59 @@ void FAT16::writeDirEntToSector(FAT16_DirEnt dirEnt, u32 clusterNum) {
         kprint("FAT16:Cluster Full!  Can't make file");
     }
 }
+
+
+
+
+
+
+///////////////////////
+// Device Formatting //
+///////////////////////
+
+void FAT16::format(bool eraseData) {
+    char zeroSector[FAT16_SECTOR_SIZE];
+    memory_set(zeroSector, '\0', FAT16_SECTOR_SIZE);
+    int i;
+    char buff[10];
+
+    if (eraseData) {
+        kprint("Formatting drive...\n");
+        for (i = 0; i < numClusters * SECTORS_PER_CLUSTER; i++) {
+            int status = fileDevice->writeSector(i, zeroSector, FAT16_SECTOR_SIZE);
+            if (status == -1) {
+                kprint("FAT16.cpp:Failed to write sector\n");
+            }
+        }
+    }
+    
+    writeBPB();
+    writeFAT();
+    u32 nextCluster = popFreeCluster();
+    createRootDir();
+}
+
+
+void FAT16::writeBPB() {
+    memory_set(BPB.reserved, '\0', FAT16_SECTOR_SIZE);
+    fileDevice->writeSector(FAT16_BPB_SECTOR, (char*)&BPB, FAT16_SECTOR_SIZE);
+}
+
+void FAT16::writeFAT() {
+    kprint("Writing FAT Table...\n");
+    setFATEntry(FAT16_RESERVED_CLUSTER, 0);
+    for (int i = 0; i < numFATClusters; i++) {
+        setFATEntry(FAT16_RESERVED_CLUSTER, i + 1);
+    }   
+}
+
+void FAT16::createRootDir() {
+    makeDotAndDoubleDot(rootCluster, rootCluster);
+}
+
+
+
+
 
 //////////////////////
 // Helper Functions //
@@ -329,6 +346,8 @@ KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
     }
     return vector; 
 }
+
+
 
 
 /////////////////////////

@@ -6,6 +6,9 @@
 class FileSystem {
 public:
     FileSystem(FileDevice &theFileDevice);
+    
+    virtual int mkdir(const char path[]) = 0;
+    virtual int ls(const char path[]) = 0;
 protected:
     FileDevice *fileDevice;
 };

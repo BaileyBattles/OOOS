@@ -83,15 +83,11 @@ private:
     FAT16BPB BPB;
     typedef u16 FATEntry;
 
-
-    //////////////////////
-    // Format the Drive //
-    //////////////////////
-
-    void format(bool eraseData);
-    void writeBPB();
-    void writeFAT();
-    void createRootDir();
+    //////////////////////////
+    // FileSystem Interface //
+    //////////////////////////
+    virtual int mkdir(const char path[]);
+    virtual int ls(const char path[]);
  
     ////////////////////////
     // Core Functionality //
@@ -101,14 +97,13 @@ private:
     //is written to homeCluster
     //Return -1 on failure
 
-    int mkdir(const char path[]);
     int mkfile(const char path[], bool isDir);
     int makeDirInCluster(const char fileName[], int dirCluster);
-    int ls(const char path[]);
     void listCluster(int dirCluster);
 
     FAT16_DirEnt makeBasicDirEnt(const char fileName[], const char extension[]);
     KVector<char*> getPathList(const char path[], int pathLength);
+
     //////////////////////
     // Device Interface //
     //////////////////////
@@ -120,6 +115,15 @@ private:
     int getFATSector(u32 FATSectorNum, char FATSector[]);
     //Given a directory entry, write it to disk
     void writeDirEntToSector(FAT16_DirEnt dirEnt, u32 sectorNum);
+
+    //////////////////////
+    // Format the Drive //
+    //////////////////////
+
+    void format(bool eraseData);
+    void writeBPB();
+    void writeFAT();
+    void createRootDir();
 
     //////////////////////
     // Helper Functions //
