@@ -2,6 +2,7 @@
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
 #include "Util/Memcpy.h"
+#include "Drivers/Screen.h"
 
 ////////////////////
 // kMemoryManager //
@@ -28,8 +29,10 @@ void *KMemoryManager::kmalloc(int numBytes){
     return kmallocStartAddress + startIndex * KMALLOC_SIZE;
 }
 
-void KMemoryManager::free(void* buffer) 
-{}
+void KMemoryManager::kfree(void* buffer) 
+{
+    kprint("called");
+}
 
 void *KMemoryManager::pagemalloc(){
     u32 startIndex = findNFree(1, pagemallocMap, pagemallocBitmapLength);
