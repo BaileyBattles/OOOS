@@ -31,7 +31,6 @@ void *KMemoryManager::kmalloc(int numBytes){
 
 void KMemoryManager::kfree(void* buffer) 
 {
-    kprint("called");
 }
 
 void *KMemoryManager::pagemalloc(){

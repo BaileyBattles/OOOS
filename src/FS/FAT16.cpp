@@ -48,6 +48,7 @@ void FAT16::format(bool eraseData) {
     makeDir("dir1", 4, rootCluster);
     listCluster(rootCluster, "/");
     listCluster(3645, "/dir1/");
+    ls("/Dir1/Dir2");
 }
 
 //////////////////////
@@ -98,6 +99,15 @@ int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
     writeDirEntToSector(dir, dirCluster);
     setFATEntry(dirCluster, FAT16_DIR_CLUSTER);
     return 0;
+}
+
+void FAT16::ls(char path[]) {
+    int length = strlen(path);
+    KVector<char*> pathList = getPathList(path, length);
+    for (int i = 0; i < pathList.size(); i++) {
+        kprint(pathList.get(i));
+        kprint("\n");
+    }
 }
 
 void FAT16::listCluster(int dirCluster, char path[]) {
