@@ -103,11 +103,11 @@ private:
 
     int mkdir(const char path[]);
     int mkfile(const char path[], bool isDir);
-    int makeFileInCluster(const char fileName[], int dirCluster, bool isDir);
-    int makeFile(const char fileName[], int nameLen, int startCluster);
-    void ls(const char path[]);
+    int makeDirInCluster(const char fileName[], int dirCluster);
+    int ls(const char path[]);
     void listCluster(int dirCluster);
 
+    FAT16_DirEnt makeBasicDirEnt(const char fileName[], const char extension[]);
     KVector<char*> getPathList(const char path[], int pathLength);
     //////////////////////
     // Device Interface //
@@ -141,11 +141,20 @@ private:
     int makeDotAndDoubleDot(int parentCluster, int dirCluster);
     //get the cluster of the DirEnt containing the file
 
-    //Example /dir1/dir2/dir3 would return dir2's cluster
-    int getDirCluster(const char path[], int pathLength, int parentCluster);
+    //Used for following directory entries
+    //Example Suppose have the cluster of Dir1 and we want to
+    //get the cluster of Dir2 in the path we would call /Dir1/Dir2
+    //   getDirCluster("Dir2", Dir1.cluster())
+    FAT16_DirEnt getDirEntInCluster(const char path[], int parentCluster);
+
+    //Returns the cluster stopBefore ahead of the last dirent
+    //Example /DIR1/DIR2 stopBefore = 1 would return DIR1s cluster
+    int followPath(const char path[], int pathLength);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////
+    FAT16_DirEnt nullDirEnt();
+    bool isNullDirEnt(FAT16_DirEnt dirEnt);
 
     bool isArchive(FAT16_DirEnt dirEnt);
     bool isDir(FAT16_DirEnt dirEnt);
