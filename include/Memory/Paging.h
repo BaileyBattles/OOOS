@@ -74,6 +74,7 @@ private:
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
     u32 read_cr3();
+    u32 read_cr2();
     PageDirectory *pageDirectoryPtr;
     PageTable *pageTablePtrs[NUM_PAGETABLES];
 

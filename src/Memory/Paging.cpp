@@ -96,7 +96,7 @@ u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
     for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
         if (currentAddress == 0x30000000) {
             setPTEBaseAddress(pageTable.entry[i], 0x800000);
-            //setPTEPresent(pageTable.entry[i]);
+            setPTEPresent(pageTable.entry[i]);
         }
         else {
             setPTEBaseAddress(pageTable.entry[i], currentAddress);
@@ -130,14 +130,15 @@ void PageTableManager::initialize() {
     initialize_cr0();
     registerISRHandler(this, 14);
 
-    // u32 *ptr = (u32*)0x30000002;
-    // *ptr = 25;
-    // u32 value = *ptr;
+    u32 *ptr = (u32*)0x30000002;
+    *ptr = 25;
+    u32 value = *ptr;
 
-    // u32 e = physicalAddress((u32)ptr);
+    u32 e = physicalAddress((u32)ptr);
 }
 
 void PageTableManager::handleInterrupt(registers_t r) {
+    u32 val = read_cr2();
     kprint("Page Fault\n");
 }
 
@@ -159,6 +160,13 @@ u32 PageTableManager::read_cr3()
 {
     u32 val;
     __asm__("movl %%cr3,%0" : "=r"(val));
+    return val;
+}
+
+u32 PageTableManager::read_cr2()
+{
+    u32 val;
+    __asm__("movl %%cr2,%0" : "=r"(val));
     return val;
 }
 
