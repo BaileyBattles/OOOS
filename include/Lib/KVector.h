@@ -12,6 +12,7 @@ template <class T>
 class KVector {
 public:
     KVector();
+    KVector(const KVector& kVector);
     T get(int index);
     void put(T item, int index);
     void remove(int index);
@@ -27,9 +28,17 @@ private:
 
 template <class T>
 KVector<T>::KVector() {
-    buffer = (T*)KMM.kmalloc(STARTING_VECTOR_SIZE);
+    buffer = (T*)KMM.kmalloc(STARTING_VECTOR_SIZE * sizeof(T));
     numItems = 0;
     capacity = STARTING_VECTOR_SIZE;
+}
+
+template <class T>
+KVector<T>::KVector(const KVector& kVector) {
+    buffer = (T*)KMM.kmalloc(kVector.capacity * sizeof(T));
+    memory_copy((char*)kVector.buffer, (char*)buffer, sizeof(T) * kVector.numItems);
+    numItems = kVector.numItems;
+    capacity = kVector.capacity;
 }
 
 template <class T>
