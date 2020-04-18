@@ -28,6 +28,9 @@ void *KMemoryManager::kmalloc(int numBytes){
     return kmallocStartAddress + startIndex * KMALLOC_SIZE;
 }
 
+void KMemoryManager::free(void* buffer) 
+{}
+
 void *KMemoryManager::pagemalloc(){
     u32 startIndex = findNFree(1, pagemallocMap, pagemallocBitmapLength);
     if (startIndex == -1) {

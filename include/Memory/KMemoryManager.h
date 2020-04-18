@@ -30,6 +30,7 @@ public:
 
     void initialize(u32 address);
     void *kmalloc(int numBytes);
+    void free(void* buffer);
     void *pagemalloc(); //allocate one page
 private:
     KMemoryManager(){};
