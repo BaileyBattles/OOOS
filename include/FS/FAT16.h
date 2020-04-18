@@ -6,12 +6,16 @@
 
 #include "Drivers/FileDevice.h"
 #include "FS/FileSystem.h"
+#include "Lib/KVector.h"
 
 #define FAT16_BPB_SECTOR 0
 #define FAT16_SECTOR_SIZE 512
 #define SECTORS_PER_CLUSTER 6
 #define NUMBER_FAT_COPIES 2
 #define ROOT_ENTRIES_COUNT 512
+
+#define FAT16_MAX_NAME_LEN 8
+#define FAT16_PATH_DELIMITER '/'
 
 #define NUM_FREED_REMEMBERED 250 //this is to limit ammount of memory usage
 
@@ -55,6 +59,8 @@ Definitions:
 class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
+    KVector<char*> getPathList(char path[], int pathLength);
+
 private:
     //////////////////
     // Data Members //
@@ -125,12 +131,15 @@ private:
     bool fileExistsInCluster(char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
     FAT16_DirEnt getDirEntFromSectorBuff(char FATSector[], u32 index);
-    u32 getDirCluster(char path[]);
 
     //Search a cluster and remove it from the free list in memory 
     u32 popFreeCluster();
 
     int makeDotAndDoubleDot(int parentCluster, int dirCluster);
+    //get the cluster of the DirEnt containing the file
+
+    //Example /dir1/dir2/dir3 would return dir2's cluster
+    int getDirCluster(char path[], int pathLength);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////

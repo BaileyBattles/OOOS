@@ -17,6 +17,7 @@ public:
     void put(T item, int index);
     void remove(int index);
     int setCapcity(int desiredCapacity);
+    void push(T item);
     int size();
 private:
     T *buffer;
@@ -64,6 +65,10 @@ void KVector<T>::put(T item, int index) {
     numItems++;
 }
 
+template <class T>
+void KVector<T>::push(T item) {
+    put(item, numItems);
+}
 template <class T>
 void KVector<T>::remove(int index) {
     if (index >= numItems) {

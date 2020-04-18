@@ -77,8 +77,14 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     IDE ide0(IDE0_PORT);
     ide0.initialize();
-
+    char path[] = "/dir1/dir2/dir3";
     FAT16 FS(ide0);
+    KVector<char*> pathV = FS.getPathList(path, strlen(path));
+    for (int i = 0; i < pathV.size(); i++) {
+        kprint(pathV.get(i));
+        kprint("\n");
+    }
+
     kernelLoop();
 
 }

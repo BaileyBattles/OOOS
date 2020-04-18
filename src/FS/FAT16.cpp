@@ -1,5 +1,6 @@
 #include "Drivers/Screen.h"
 #include "FS/FAT16.h"
+#include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
 #include "Util/String.h"
 
@@ -78,7 +79,7 @@ void FAT16::createRootDir() {
 int FAT16::makeDir(char fileName[], int nameLen, int dirCluster) {
     FAT16_DirEnt dir;
     memory_set(&dir, '\0', sizeof(FAT16_DirEnt));
-    if (nameLen > 8) {
+    if (nameLen > FAT16_MAX_NAME_LEN) {
         kprint("FAT16:Name can only be 8 chars");
         return -1;
     }
@@ -220,7 +221,7 @@ u32 FAT16::getSectorOffsetForDirEnt(char FATSector[]) {
 
 bool FAT16::fileExistsInCluster(char fileName[], u32 clusterNum) {
     u32 nameLen = strlen(fileName);
-    if (nameLen > 8) {
+    if (nameLen > FAT16_MAX_NAME_LEN) {
         kprint("FAT16: Filename must be less than 8 characters\n");
         return true; //
     }
@@ -251,6 +252,44 @@ u32 FAT16::popFreeCluster() {
     }
 }
 
+KVector<char*> FAT16::getPathList(char path[], int pathLength) {
+    int index = 1; //pass the first slash in the root directory
+    KVector<char*> vector;
+    while (index < pathLength) {
+        char *filename = (char*)KMM.kmalloc(FAT16_MAX_NAME_LEN + 1);
+        memory_set(filename, '\0', FAT16_MAX_NAME_LEN + 1);
+        int charNum = 0;
+        while (charNum < FAT16_MAX_NAME_LEN && index + charNum < pathLength) {
+            if (path[index + charNum] == FAT16_PATH_DELIMITER) {
+                filename[charNum + 1] = '\0';
+                break;
+            }
+            else {
+                filename[charNum] = path[index + charNum];
+                charNum++;
+            }
+        }
+        vector.push(filename);
+        index += charNum + 1; //pass the next delimiter
+    }
+    return vector; 
+}
+
+// int FAT16::getDirCluster(char path[], int pathLength){
+//     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
+//         char FATSector[FAT16_SECTOR_SIZE];
+//         readSector(dirCluster, sector, FATSector);
+//         for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
+//             FAT16_DirEnt entry;
+//             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
+//             if (entry.fileName[0] != '\0') {
+//                 kprint(path);
+//                 kprint(entry.fileName);
+//                 kprint("\n");
+//             }
+//         }
+//     }
+// }
 
 
 /////////////////////////
