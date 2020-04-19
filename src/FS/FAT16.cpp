@@ -41,14 +41,46 @@ File FAT16::getFile(const char path[]){
     }
     FileInfo fileInfo;
     fileInfo.startSector = dirEnt.startingCluster * SECTORS_PER_CLUSTER;
+    fileInfo.size = 0;
     return File(*this, fileInfo);
 }
 
-int FAT16::readNBytes(int startSector, int nBytes){
-    int clusterNum = startSector / SECTORS_PER_CLUSTER;
-    int clusterOffset = startSector % SECTORS_PER_CLUSTER;
+int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
+    int clusterNum = file.startSector() / SECTORS_PER_CLUSTER;
+    int clusterOffset = file.startSector() % SECTORS_PER_CLUSTER;
+    int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
+    for (int i = 0; i < numSectors; i++) {
+        int status = readSector(clusterNum, clusterOffset, 
+                                    buffer + i * FAT16_SECTOR_SIZE);
+        if (status == -1) {
+            kprint("FAT16:readNBytes: Write Sector failed\n");
+            return -1;
+        }
+    }
     return 0;
 }
+
+// This also handles allocating new sectors if needed
+int FAT16::writeNBytes(const File &file, char buffer[], int nBytes){
+    int clusterNum = file.startSector() / SECTORS_PER_CLUSTER;
+    int clusterOffset = file.startSector() % SECTORS_PER_CLUSTER;
+
+    int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
+    for (int i = 0; i < numSectors; i++) {
+        if (clusterOffset >= SECTORS_PER_CLUSTER) {
+            clusterNum = popFreeCluster();
+            clusterOffset = 0;
+        }
+        int status = writeSector(clusterNum, clusterOffset, 
+                                    buffer + i * FAT16_SECTOR_SIZE);
+        if (status == -1) {
+            kprint("FAT16:writeNBytes: Write Sector failed\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 
 
 int FAT16::mkdir(const char path[]) {
@@ -253,7 +285,7 @@ void FAT16::format(bool eraseData) {
     }
     
     writeBPB();
-    writeFAT();
+    //writeFAT();
     u32 nextCluster = popFreeCluster();
     createRootDir();
 }
