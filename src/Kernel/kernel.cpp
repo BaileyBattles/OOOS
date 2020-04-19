@@ -81,9 +81,6 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     char path[] = "/dir1/dir2/dir3";
     FAT16 f16(ide0);
     FileSystem *fileSystem = (FileSystem*)&f16;
-    fileSystem->mkdir("/Dir1");
-    fileSystem->mkdir("/Dir1/Dir2");
-    // fileSystem->ls("/Dir1");
     VFS.mount(*fileSystem, 'A');
 
     kernelLoop();

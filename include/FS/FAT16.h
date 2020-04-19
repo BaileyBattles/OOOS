@@ -63,10 +63,12 @@ public:
     //////////////////////////
     // FileSystem Interface //
     //////////////////////////
-    virtual File getFile(const char path[]);
+    virtual File *getFile(const char path[]);
     virtual int readNBytes(const File &file, char buffer[], int nBytes);
     virtual int writeNBytes(const File &file, char buffer[], int nBytes);
     virtual int mkdir(const char path[]);
+    virtual int mkfile(const char path[]);
+
     virtual int ls(const char path[]);
 
     typedef u16 FATEntry;
@@ -99,11 +101,7 @@ private:
     // Core Functionality //
     ////////////////////////
 
-    //Make a dirent with filename that points to startCluster and
-    //is written to homeCluster
-    //Return -1 on failure
-    int mkfile(const char path[], bool isDir);
-    int makeDirInCluster(const char fileName[], int dirCluster);
+    int makeEntryInCluster(const char fileName[], int dirCluster, bool isDir);
     void listCluster(int dirCluster);
 
     FAT16_DirEnt makeBasicDirEnt(const char fileName[], const char extension[]);

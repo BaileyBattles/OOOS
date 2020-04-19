@@ -28,21 +28,20 @@ FAT16::FAT16(FileDevice &theFileDevice) :
 // FileSystem Interface //
 //////////////////////////
 
-    //////////////////////////
-    // FileSystem Interface //
-    //////////////////////////
-File FAT16::getFile(const char path[]){
+
+File *FAT16::getFile(const char path[]){
     FAT16_DirEnt dirEnt = followPath(path, 0);
     if (isNullDirEnt(dirEnt)) {
-        kprint("FAT16:GetFile File does not exist\n");
+        return nullptr;
     }
-    if (!isFile(dirEnt)) {
-        kprint("FAT16:GetFile Requested file is not a file\n");
-    }
+
     FileInfo fileInfo;
     fileInfo.startSector = dirEnt.startingCluster * SECTORS_PER_CLUSTER;
     fileInfo.size = 0;
-    return File(*this, fileInfo);
+    File *filePtr = (File*)KMM.kmalloc(sizeof(File));
+    File file(*this, fileInfo);
+    memory_copy((char*)&file, (char*)filePtr, sizeof(File));
+    return filePtr;
 }
 
 int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
@@ -97,7 +96,19 @@ int FAT16::mkdir(const char path[]) {
         return -1;
     }
     int cluster = dirEnt.startingCluster;
-    makeDirInCluster(pathList.get(pathList.size() - 1), cluster);
+    makeEntryInCluster(pathList.get(pathList.size() - 1), cluster, true);
+    return 0;
+}
+
+
+int FAT16::mkfile(const char path[]) {
+    KVector<char*> pathList = getPathList(path, strlen(path));
+    FAT16_DirEnt dirEnt = followPath(path, 1);
+    if (isNullDirEnt(dirEnt)) {
+        return -1;
+    }
+    int cluster = dirEnt.startingCluster;
+    makeEntryInCluster(pathList.get(pathList.size() - 1), cluster, false);
     return 0;
 }
 
@@ -149,17 +160,13 @@ KVector<FAT16::FATEntry> FAT16::followFATEntries(int startingCluster) {
 
     getFATSector(FATSectorNum, FATSector);
     FATEntry *nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
-    while (*nextClusterPtr != 0xFFF1) {
+    while (*nextClusterPtr != FAT16_END_OF_FILE) {
         clusters.push(*nextClusterPtr);
         getFATSector(*nextClusterPtr, FATSector);
         nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
     }
 }
 
-
-int FAT16::mkfile(const char path[], bool isDir) {
-
-}
 
 FAT16_DirEnt FAT16::makeBasicDirEnt(const char fileName[], const char extension[]){
     int nameLen = strlen(fileName);
@@ -183,24 +190,23 @@ FAT16_DirEnt FAT16::makeBasicDirEnt(const char fileName[], const char extension[
         dir.fileExt[i] = extension[i];
 }
 
-int FAT16::makeDirInCluster(const char fileName[], int dirCluster) {
+int FAT16::makeEntryInCluster(const char fileName[], int dirCluster, bool isDir) {
     FAT16_DirEnt dir = makeBasicDirEnt(fileName, "");
 
     //check if we can find a dirent with that filename in the cluster
     if (fileExistsInCluster(fileName, dirCluster)) {
         return -1;
     }
-
-    setDir(dir);
     dir.startingCluster = popFreeCluster();
-    kprint(fileName);
-    kprint(" ");
-    char buff[10];
-    kprint(int_to_ascii(dir.startingCluster, buff));
-    kprint("\n");
-    makeDotAndDoubleDot(dirCluster, dir.startingCluster);
+    if (isDir){
+        setDir(dir);
+        setFATEntry(FAT16_DIR_CLUSTER, dirCluster);
+        makeDotAndDoubleDot(dirCluster, dir.startingCluster);
+    }
+    else {
+        setFATEntry(FAT16_END_OF_FILE, dir.startingCluster);
+    }
     writeDirEntToSector(dir, dirCluster);
-    //setFATEntry(FAT16_DIR_CLUSTER, dir.startingCluster);
     return 0;
 }
 
@@ -244,8 +250,6 @@ void FAT16::setFATEntry(FATEntry entry, u32 index){
     u32 offset = (index % numFATEntriesPerSector)*sizeof(FATEntry);
     char FATSector[FAT16_SECTOR_SIZE];
     char buff[10];
-    kprint(int_to_ascii(FATSectorNum, buff));
-    kprint(" ");
     fileDevice->readSector(FATSectorNum, FATSector, FAT16_SECTOR_SIZE);
     //setFourBytes(entry, FATSector, offset);
     memory_copy((char*)&entry, FATSector + offset, sizeof(FATEntry));
@@ -301,7 +305,6 @@ void FAT16::format(bool eraseData) {
     
     writeBPB();
     //writeFAT();
-    u32 nextCluster = popFreeCluster();
     createRootDir();
 }
 
@@ -349,7 +352,6 @@ int FAT16::makeDotAndDoubleDot(int parentCluster, int dirCluster) {
         setDir(doubleDot);
         writeDirEntToSector(doubleDot, dirCluster);
     }
-    setFATEntry(FAT16_DIR_CLUSTER, dirCluster);
 }
 
 FAT16_DirEnt FAT16::getDirEntFromSectorBuff(const char FATSector[], u32 index){
