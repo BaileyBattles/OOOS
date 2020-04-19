@@ -1,5 +1,5 @@
 #!/bin/sh
 
-
-hexdump -v drive/storage.img | head -n `expr $1 \* 32` | tail -n 32
+VAL=`expr $1 + 1`
+hexdump -v drive/storage.img | head -n `expr $VAL \* 32` | tail -n 32
     
