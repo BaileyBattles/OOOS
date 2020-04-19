@@ -20,4 +20,5 @@ void VirtualFileSystem::mount(FileSystem& fileSystem, char name) {
     fileSystems[0]->writeNBytes(file, buffer, strlen(buffer));
     char buffer2[14];
     fileSystems[0]->readNBytes(file, buffer2, 14);
+    kprint(buffer2);
 }
