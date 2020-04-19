@@ -19,6 +19,10 @@ public:
     }
 
     void mount(FileSystem &fileSystem, char name);
+    int open(const char path[], int flags);
+    int read(int fd, char buffer[], int nbytes);
+    int write(int fd, char buffer[], int nbytes);
+    int close(int fd);
 
 private:
     char names[MAX_NUM_FILESYSTEMS];

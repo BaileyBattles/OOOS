@@ -5,6 +5,7 @@
 //Make freedClusters a vector (when I make the vector class)
 
 #include "Drivers/FileDevice.h"
+#include "FS/File.h"
 #include "FS/FileSystem.h"
 #include "Lib/KVector.h"
 
@@ -59,13 +60,22 @@ Definitions:
 class FAT16 : public FileSystem {
 public:
     FAT16(FileDevice &fileDevice);
+    //////////////////////////
+    // FileSystem Interface //
+    //////////////////////////
+    virtual File getFile(const char path[]);
+    virtual int readNBytes(int startSector, int nBytes);
+    virtual int mkdir(const char path[]);
+    virtual int ls(const char path[]);
+
+    typedef u16 FATEntry;
 
 private:
     //////////////////
     // Data Members //
     //////////////////
 
-    int numEntriesPerSector;
+    int numFATEntriesPerSector;
     int numClusters;
     int numFATClusters;
     int startFATSector;
@@ -81,13 +91,8 @@ private:
     } FAT16BPB;
 
     FAT16BPB BPB;
-    typedef u16 FATEntry;
 
-    //////////////////////////
-    // FileSystem Interface //
-    //////////////////////////
-    virtual int mkdir(const char path[]);
-    virtual int ls(const char path[]);
+
  
     ////////////////////////
     // Core Functionality //
@@ -96,7 +101,6 @@ private:
     //Make a dirent with filename that points to startCluster and
     //is written to homeCluster
     //Return -1 on failure
-
     int mkfile(const char path[], bool isDir);
     int makeDirInCluster(const char fileName[], int dirCluster);
     void listCluster(int dirCluster);
@@ -153,10 +157,13 @@ private:
 
     //Returns the cluster stopBefore ahead of the last dirent
     //Example /DIR1/DIR2 stopBefore = 1 would return DIR1s cluster
-    int followPath(const char path[], int pathLength);
+    FAT16_DirEnt followPath(const char path[], int stopBefore);
+
+    KVector<u16> followFATEntries(int startingSector);
     ///////////////////////
     // DirEnt Operations //
     ///////////////////////
+    FAT16_DirEnt rootDirEnt();
     FAT16_DirEnt nullDirEnt();
     bool isNullDirEnt(FAT16_DirEnt dirEnt);
 
@@ -166,6 +173,7 @@ private:
     bool system(FAT16_DirEnt dirEnt);
     bool isHidden(FAT16_DirEnt dirEnt);
     bool isReadOnly(FAT16_DirEnt dirEnt);
+    bool isFile(FAT16_DirEnt dirEnt);
 
     void setArchive(FAT16_DirEnt &dirEnt);
     void setDir(FAT16_DirEnt &dirEnt);

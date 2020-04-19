@@ -7,8 +7,8 @@
 FAT16::FAT16(FileDevice &theFileDevice) :
     FileSystem(theFileDevice) 
 {
-    numEntriesPerSector = FAT16_SECTOR_SIZE / (sizeof(FATEntry) * 8);
-    u32 numEntriesPerCluster = numEntriesPerSector * SECTORS_PER_CLUSTER;
+    numFATEntriesPerSector = FAT16_SECTOR_SIZE / (sizeof(FATEntry) * 8);
+    u32 numEntriesPerCluster = numFATEntriesPerSector * SECTORS_PER_CLUSTER;
     numClusters = fileDevice->deviceSize() / (SECTORS_PER_CLUSTER * FAT16_SECTOR_SIZE);
     numFATClusters = numClusters / numEntriesPerCluster;
 
@@ -28,21 +28,47 @@ FAT16::FAT16(FileDevice &theFileDevice) :
 // FileSystem Interface //
 //////////////////////////
 
+    //////////////////////////
+    // FileSystem Interface //
+    //////////////////////////
+File FAT16::getFile(const char path[]){
+    FAT16_DirEnt dirEnt = followPath(path, 0);
+    if (isNullDirEnt(dirEnt)) {
+        kprint("FAT16:GetFile File does not exist\n");
+    }
+    if (!isFile(dirEnt)) {
+        kprint("FAT16:GetFile Requested file is not a file\n");
+    }
+    FileInfo fileInfo;
+    fileInfo.startSector = dirEnt.startingCluster * SECTORS_PER_CLUSTER;
+    return File(*this, fileInfo);
+}
+
+int FAT16::readNBytes(int startSector, int nBytes){
+    int clusterNum = startSector / SECTORS_PER_CLUSTER;
+    int clusterOffset = startSector % SECTORS_PER_CLUSTER;
+    return 0;
+}
+
+
 int FAT16::mkdir(const char path[]) {
     KVector<char*> pathList = getPathList(path, strlen(path));
-    int cluster = followPath(path, pathList.size() - 1);
-    if (cluster == -1) {
+    FAT16_DirEnt dirEnt = followPath(path, 1);
+    if (isNullDirEnt(dirEnt)) {
         return -1;
     }
+    int cluster = dirEnt.startingCluster;
     makeDirInCluster(pathList.get(pathList.size() - 1), cluster);
     return 0;
 }
 
 int FAT16::ls(const char path[]) {
     KVector<char*> pathList = getPathList(path, strlen(path));
-    int cluster = followPath(path, pathList.size());
-    if (cluster == -1)
+    FAT16_DirEnt dirEnt = followPath(path, 0);
+    if (isNullDirEnt(dirEnt)) {
         return -1;
+    }
+    int cluster = dirEnt.startingCluster;
     listCluster(cluster);
     return 0;
 }
@@ -53,22 +79,43 @@ int FAT16::ls(const char path[]) {
 // Core Functionality //
 ////////////////////////
 
-int FAT16::followPath(const char path[], int pathLength) {
+FAT16_DirEnt FAT16::followPath(const char path[], int stopBefore) {
     KVector<char*> pathList = getPathList(path, strlen(path));
     int currCluster = rootCluster;
-        for (int i = 0; i < pathLength; i++) {
-            FAT16_DirEnt dirEnt = getDirEntInCluster(pathList.get(i), currCluster);
-            if (isNullDirEnt(dirEnt)) {
-                kprint("No such file or directory ");
-                kprint(path);
-                kprint("\n");
-                return -1;
-            }
-            currCluster = dirEnt.startingCluster;
+    FAT16_DirEnt currEntry = rootDirEnt();
+    for (int i = 0; i < pathList.size() - stopBefore; i++) {
+        FAT16_DirEnt dirEnt = getDirEntInCluster(pathList.get(i), currCluster);
+        if (isNullDirEnt(dirEnt)) {
+            kprint("No such file or directory ");
+            kprint(path);
+            kprint("\n");
+            return nullDirEnt();
         }
-    return currCluster;
+        currCluster = dirEnt.startingCluster;
+        currEntry = dirEnt;
+    }
+    return currEntry;
 }
 
+KVector<FAT16::FATEntry> FAT16::followFATEntries(int startingCluster) {
+    //Example If the file's first cluster was at cluster 35 and there are
+    //32 FAT entries per Sector then the FAT Entry will lie in the 
+    //2nd FAT Sector with an offset of 3
+    int FATSectorNum = startingCluster / numFATEntriesPerSector;
+    int FATSectorOffset = startingCluster % numFATEntriesPerSector;
+
+    KVector<FAT16::FATEntry> clusters;
+    clusters.push(startingCluster);
+    char FATSector[FAT16_SECTOR_SIZE];
+
+    getFATSector(FATSectorNum, FATSector);
+    FATEntry *nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
+    while (*nextClusterPtr != FAT16_END_OF_FILE) {
+        clusters.push(*nextClusterPtr);
+        getFATSector(*nextClusterPtr, FATSector);
+        nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
+    }
+}
 
 
 int FAT16::mkfile(const char path[], bool isDir) {
@@ -150,8 +197,8 @@ int FAT16::writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]){
 }
 
 void FAT16::setFATEntry(FATEntry entry, u32 index){
-    u32 sectorNum = (index / numEntriesPerSector) + startFATSector;
-    u32 offset = (index % numEntriesPerSector)*4;
+    u32 sectorNum = (index / numFATEntriesPerSector) + startFATSector;
+    u32 offset = (index % numFATEntriesPerSector)*4;
     char FATSector[FAT16_SECTOR_SIZE];
     fileDevice->readSector(sectorNum, FATSector, FAT16_SECTOR_SIZE);
     setFourBytes(entry, FATSector, offset);
@@ -353,6 +400,15 @@ KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
 /////////////////////////
 // DirEnt Manipulation //
 /////////////////////////
+FAT16_DirEnt FAT16::rootDirEnt() {
+    FAT16_DirEnt dirEnt;
+    memory_set((void*)&dirEnt, '\0', sizeof(FAT16_DirEnt));
+    dirEnt.fileName[0] = '.';
+    setDir(dirEnt);
+    dirEnt.startingCluster = rootCluster;
+    return dirEnt;
+}
+
 FAT16_DirEnt FAT16::nullDirEnt() {
     FAT16_DirEnt dirEnt;
     memory_set((void*)&dirEnt, '\0', sizeof(FAT16_DirEnt));
@@ -384,6 +440,11 @@ bool FAT16::isHidden(FAT16_DirEnt dirEnt){
 }
 bool FAT16::isReadOnly(FAT16_DirEnt dirEnt){
     return dirEnt.attribute & 1;
+}
+
+bool FAT16::isFile(FAT16_DirEnt dirEnt) {
+    return (!isDir(dirEnt) && !isVolumeID(dirEnt) && 
+            !isArchive(dirEnt) && !system(dirEnt));
 }
 
 void FAT16::setArchive(FAT16_DirEnt &dirEnt) {
