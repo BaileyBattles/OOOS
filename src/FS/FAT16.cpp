@@ -74,10 +74,16 @@ int FAT16::writeNBytes(const File &file, char buffer[], int nBytes){
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
     for (int i = 0; i < numSectors; i++) {
         if (clusterOffset >= SECTORS_PER_CLUSTER) {
-            int newClusterNum = popFreeCluster();
-            setFATEntry(newClusterNum, clusterNum);
-            clusterNum = newClusterNum;
-            setFATEntry(FAT16_END_OF_FILE, clusterNum);
+            FATEntry entry = getFATEntry(clusterNum);
+            if (entry == 0 || entry == FAT16_END_OF_FILE) {
+                int newClusterNum = popFreeCluster();
+                setFATEntry(newClusterNum, clusterNum);
+                clusterNum = newClusterNum;
+                setFATEntry(FAT16_END_OF_FILE, clusterNum);
+            }
+            else {
+                clusterNum = entry;
+            }
             clusterOffset = 0;
         }
         int status = writeSector(clusterNum, clusterOffset, 
@@ -263,6 +269,16 @@ void FAT16::setFATEntry(FATEntry entry, u32 index){
     fileDevice->writeSector(FATSectorNum, FATSector, FAT16_SECTOR_SIZE);
 }
 
+FAT16::FATEntry FAT16::getFATEntry(u16 clusterNum) {
+    u32 FATSectorNum = clusterNum / numFATEntriesPerSector;
+    u32 FATSectorOffset = clusterNum % numFATEntriesPerSector;
+    
+    u32 trueSectorNum = startFATSector + FATSectorNum;
+    FATEntry FATSector[numFATEntriesPerSector];
+    fileDevice->readSector(trueSectorNum, (char*)FATSector, FAT16_SECTOR_SIZE);
+    return FATSector[FATSectorOffset];
+}
+
 int FAT16::getFATSector(u32 FATSectorNum, char FATSector[]) {
     u32 trueSectorNum = startFATSector + FATSectorNum;
     return fileDevice->readSector(trueSectorNum, FATSector, FAT16_SECTOR_SIZE);
@@ -443,6 +459,17 @@ KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
     }
     return vector; 
 }
+
+// void FAT16::findFreeClusters() {
+//     int startOfFreeZone = 0;
+//     for (int i = 0; i < numFATClusters * SECTORS_PER_CLUSTER; i++) {
+//         FATEntry FATSector[numFATEntriesPerSector];
+//         fileDevice->readSector(i + startFATSector, (char*)FATSector, FAT16_SECTOR_SIZE);
+//         for (int j = i * numFATEntriesPerSector; j < (i+1) * numFATEntriesPerSector; j++) {
+
+//         }
+//     }
+// }
 
 
 

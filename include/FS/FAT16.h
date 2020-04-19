@@ -106,6 +106,7 @@ private:
 
     FAT16_DirEnt makeBasicDirEnt(const char fileName[], const char extension[]);
     KVector<char*> getPathList(const char path[], int pathLength);
+    void findFreeClusters();
 
     //////////////////////
     // Device Interface //
@@ -114,6 +115,7 @@ private:
     int readSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
     int writeSector(u32 clusterNum, u32 sectorOffset, char FATSector[]);
     void setFATEntry(FATEntry entry, u32 index);
+    FATEntry getFATEntry(u16 clusterNum);
     //Here FATSectorNum = 0 is the first sector in the FAT
     int getFATSector(u32 FATSectorNum, char FATSector[]);
     //Given a directory entry, write it to disk
