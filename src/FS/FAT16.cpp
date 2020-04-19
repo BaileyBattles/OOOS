@@ -52,7 +52,6 @@ int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
     for (int i = 0; i < numSectors; i++) {
          if (clusterOffset >= SECTORS_PER_CLUSTER) {
-            //clusterNum = popFreeCluster();
             clusterOffset = 0;
         }
         int status = readSector(clusterNum, clusterOffset, 
@@ -327,8 +326,9 @@ void FAT16::format(bool eraseData) {
     }
     
     writeBPB();
-    //writeFAT();
+    writeFAT();
     createRootDir();
+    findFreeClusters();
 }
 
 
@@ -403,17 +403,20 @@ u32 FAT16::getSectorOffsetForDirEnt(const char FATSector[]) {
 }
 
 u32 FAT16::popFreeCluster() {
-    if (freedClusters[0] == '\0') {
-        nextAvailableCluster++;
-        return nextAvailableCluster - 1;
+    if (freeClusters.size() == 0) {
+        return 0;
     }
-    else {
-        int i = 0;
-        while (freedClusters[i] != '\0' && i < NUM_FREED_REMEMBERED)
-            i++;
-        u32 cluster = freedClusters[i - 1];
-        return cluster;
+    u32 value = freeClusters.get(0);
+    freeClusters.remove(0);
+    u16 start = value & 0xFFFF;
+    u16 length = (value >> 16) & 0xFFFF;
+    u16 newStart = start + 1;
+    u16 newLength = length - 1;
+    if (newLength > 0) {
+        u32 value = newStart |= ((newLength << 16) & 0xFFFF);
+        freeClusters.put(value, 0);
     }
+    return start;
 }
 
 bool FAT16::fileExistsInCluster(const char fileName[], u32 clusterNum) {
@@ -460,16 +463,31 @@ KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
     return vector; 
 }
 
-// void FAT16::findFreeClusters() {
-//     int startOfFreeZone = 0;
-//     for (int i = 0; i < numFATClusters * SECTORS_PER_CLUSTER; i++) {
-//         FATEntry FATSector[numFATEntriesPerSector];
-//         fileDevice->readSector(i + startFATSector, (char*)FATSector, FAT16_SECTOR_SIZE);
-//         for (int j = i * numFATEntriesPerSector; j < (i+1) * numFATEntriesPerSector; j++) {
-
-//         }
-//     }
-// }
+void FAT16::findFreeClusters() {
+    int lastUsed = -1;
+    for (int i = 0; i < numFATClusters * SECTORS_PER_CLUSTER; i++) {
+        FATEntry FATSector[numFATEntriesPerSector];
+        fileDevice->readSector(i + startFATSector, (char*)FATSector, FAT16_SECTOR_SIZE);
+        for (int j = 0; j < numFATEntriesPerSector; j++) {
+            if (FATSector[j] != FAT16_AVAILABLE_CLUSTER) {
+                int currentCluster = i * numFATEntriesPerSector + j;
+                int numFree = currentCluster - lastUsed - 1;
+                if (numFree > 0) {
+                    u32 value = lastUsed + 1;
+                    value |= ((numFree << 16) & 0xFFFF0000);
+                    freeClusters.push(value);
+                }
+                lastUsed = currentCluster;
+            }
+        }
+    }
+    int numFree = numFATClusters * SECTORS_PER_CLUSTER * numFATEntriesPerSector - lastUsed - 1;
+    if (numFree > 0) {
+        u32 value = lastUsed + 1;
+        value |= ((numFree << 16) & 0xFFFF0000);
+        freeClusters.push(value);
+    }
+}
 
 
 

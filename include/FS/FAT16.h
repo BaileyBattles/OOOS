@@ -95,6 +95,9 @@ private:
 
     FAT16BPB BPB;
 
+    //32 bits where the top 16 are the number free and the
+    //bottom 16 are the clusterNum the free buffer starts at
+    KVector<u32> freeClusters;
 
  
     ////////////////////////
