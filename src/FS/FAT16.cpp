@@ -73,7 +73,10 @@ int FAT16::writeNBytes(const File &file, char buffer[], int nBytes){
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
     for (int i = 0; i < numSectors; i++) {
         if (clusterOffset >= SECTORS_PER_CLUSTER) {
-            clusterNum = popFreeCluster();
+            int newClusterNum = popFreeCluster();
+            setFATEntry(newClusterNum, clusterNum);
+            clusterNum = newClusterNum;
+            setFATEntry(FAT16_END_OF_FILE, clusterNum);
             clusterOffset = 0;
         }
         int status = writeSector(clusterNum, clusterOffset, 
@@ -162,7 +165,10 @@ KVector<FAT16::FATEntry> FAT16::followFATEntries(int startingCluster) {
     FATEntry *nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
     while (*nextClusterPtr != FAT16_END_OF_FILE) {
         clusters.push(*nextClusterPtr);
-        getFATSector(*nextClusterPtr, FATSector);
+
+        FATSectorNum = *nextClusterPtr / numFATEntriesPerSector;
+        FATSectorOffset = *nextClusterPtr % numFATEntriesPerSector;
+        getFATSector(FATSectorNum, FATSector);
         nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
     }
 }
