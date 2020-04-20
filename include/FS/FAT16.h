@@ -5,7 +5,6 @@
 //Make freedClusters a vector (when I make the vector class)
 
 #include "Drivers/FileDevice.h"
-#include "FS/File.h"
 #include "FS/FileSystem.h"
 #include "Lib/KVector.h"
 
@@ -63,12 +62,11 @@ public:
     //////////////////////////
     // FileSystem Interface //
     //////////////////////////
-    virtual File *getFile(const char path[]);
     virtual int readNBytes(const char path[], char buffer[], int nBytes);
     virtual int writeNBytes(const char path[], char buffer[], int nBytes);
     virtual int mkdir(const char path[]);
     virtual int mkfile(const char path[]);
-
+    virtual int sectorSize();
     virtual int ls(const char path[]);
 
     typedef u16 FATEntry;

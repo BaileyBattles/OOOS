@@ -30,21 +30,6 @@ FAT16::FAT16(FileDevice &theFileDevice) :
 //////////////////////////
 
 
-File *FAT16::getFile(const char path[]){
-    FAT16_DirEnt dirEnt = followPath(path, 0);
-    if (isNullDirEnt(dirEnt)) {
-        return nullptr;
-    }
-
-    FileInfo fileInfo;
-    fileInfo.startSector = dirEnt.startingCluster * SECTORS_PER_CLUSTER;
-    fileInfo.size = 0;
-    File *filePtr = (File*)KMM.kmalloc(sizeof(File));
-    File file(*this, fileInfo);
-    memory_copy((char*)&file, (char*)filePtr, sizeof(File));
-    return filePtr;
-}
-
 int FAT16::readNBytes(const char path[], char buffer[], int nBytes){
     FAT16_DirEnt parent = followPath(path, 1);
     FAT16_DirEnt file = followPath(path, 0);
@@ -135,11 +120,16 @@ int FAT16::writeNBytes(const char path[], char buffer[], int nBytes){
 
 
 int FAT16::mkdir(const char path[]) {
-    KVector<char*> pathList = getPathList(path, strlen(path));
-    FAT16_DirEnt dirEnt = followPath(path, 1);
-    if (isNullDirEnt(dirEnt)) {
-        return -1;
+    FAT16_DirEnt dirEnt = followPath(path, 0);
+    if (!isNullDirEnt(dirEnt)) {
+        return -1; //file exists
     }
+    dirEnt = followPath(path, 1);
+    if (isNullDirEnt(dirEnt)) {
+        return -1; //parent dir does not exist
+    }
+
+    KVector<char*> pathList = getPathList(path, strlen(path));
     int cluster = dirEnt.startingCluster;
     makeEntryInCluster(pathList.get(pathList.size() - 1), cluster, true);
     return 0;
@@ -147,11 +137,15 @@ int FAT16::mkdir(const char path[]) {
 
 
 int FAT16::mkfile(const char path[]) {
-    KVector<char*> pathList = getPathList(path, strlen(path));
-    FAT16_DirEnt dirEnt = followPath(path, 1);
+    FAT16_DirEnt dirEnt = followPath(path, 0);
+    if (!isNullDirEnt(dirEnt)) {
+        return -1; //file exists
+    }
+    dirEnt = followPath(path, 1);
     if (isNullDirEnt(dirEnt)) {
         return -1;
     }
+    KVector<char*> pathList = getPathList(path, strlen(path));
     int cluster = dirEnt.startingCluster;
     makeEntryInCluster(pathList.get(pathList.size() - 1), cluster, false);
     return 0;
@@ -168,6 +162,9 @@ int FAT16::ls(const char path[]) {
     return 0;
 }
 
+int FAT16::sectorSize() {
+    return FAT16_SECTOR_SIZE;
+}
 
 
 ////////////////////////
@@ -180,9 +177,10 @@ FAT16_DirEnt FAT16::followPath(const char path[], int stopBefore) {
     FAT16_DirEnt currEntry = rootDirEnt();
     for (int i = 0; i < pathList.size() - stopBefore; i++) {
         FAT16_DirEnt dirEnt;
+        memory_set(&dirEnt, '\0', sizeof(FAT16_DirEnt));
         setFilename(dirEnt, pathList.get(i));
         int dirEntIndex = getDirEntInCluster(dirEnt, currCluster);
-        if (isNullDirEnt(dirEnt)) {
+        if (dirEntIndex == -1) {
             kprint("No such file or directory ");
             kprint(path);
             kprint("\n");
