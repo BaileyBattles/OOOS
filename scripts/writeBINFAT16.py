@@ -59,25 +59,28 @@ def write_fat(disk_file_name):
         for i in range(num_fat_clusters):
             f.write(reserved)
 
-def write_fileentry_to_bin(disk_file_name, filename, start_cluster, filenumber):
+def write_fileentry_to_bin(disk_file_name, filename, start_cluster, filenumber, filesize):
     with open(disk_file_name, 'r+b') as disk_file:
         b = bytearray()
         b.extend(map(ord, filename))
         filename_bytes = bytes(b)
         filename_filler = bytes(8 - len(filename))
         start_cluster_bytes = start_cluster.to_bytes(2, byteorder='little')
+        size_bytes = filesize.to_bytes(4, byteorder='little')
         file_entry = filename_bytes + \
         filename_filler + \
         b'\x00\x00\x00\x00\x00\x00\x00\x00' + \
         b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + \
         start_cluster_bytes + \
-        b'\x00\x00\x00\x00'
+        size_bytes
+        
         bin_cluster = ROOT_CLUSTER + 1
         disk_file.seek(bin_cluster * CLUSTER_SIZE + 32 * filenumber)
         disk_file.write(file_entry)
         
 def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
     start_cluster = currClusterNum
+    contents = b''
     with open(filename, 'rb') as data_file:
         with open(disk_file_name, 'r+b') as disk_file:
             contents = data_file.read()
@@ -91,7 +94,7 @@ def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
             set_fat_entry(disk_file_name, b'\xF8\xFF', currClusterNum)
             disk_file.seek(start_cluster * CLUSTER_SIZE)
             disk_file.write(contents)
-            write_fileentry_to_bin(disk_file_name, 'FILE', start_cluster, filenumber)
+            write_fileentry_to_bin(disk_file_name, 'FILE', start_cluster, filenumber, len(contents))
     return (filenumber + 1, currClusterNum)
 
 
@@ -101,7 +104,7 @@ def main():
     #DONT CHANGE FIRST FEW LINES
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
     write_fat(DISK_NAME)
-    filename = os.path.join(os.getcwd(), 'data/copy_file.txt')
+    filename = os.path.join(os.getcwd(), 'src/Lib/stdlib/libstdcxx.o')
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
     currClusterNum = ROOT_CLUSTER + 2 #We start with the cluster after BIN
