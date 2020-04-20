@@ -8,6 +8,9 @@ C_SOURCES = $(wildcard src/Kernel/*.cpp       \
 					   src/Lib/*.cpp          \
 					   src/Lib/stdlib/*.cpp   \
 					   )
+
+BINUTILS = $(wildcard src/Binutils/*.cpp)
+
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.cpp=.o    \
         src/CPU/Interrupt.o} 
@@ -42,6 +45,9 @@ run-iso: kernel.iso
 storage.img: scripts/writeBINFAT16.py
 	dd if=/dev/zero of=drive/storage.img bs=1M count=1024
 	python3 '$<'
+
+binutils:
+	make -C src/Binutils
 
 # Used for debugging purposes
 kernel.elf: src/Boot/Entry.o ${OBJ}

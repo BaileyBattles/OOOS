@@ -86,10 +86,9 @@ def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
             contents = data_file.read()
             num_clusters = int(len(contents) / (CLUSTER_SIZE))
             for i in range(num_clusters - 1):
-                lower_byte = (currClusterNum + 1) & 0xFF
-                higher_byte = ((currClusterNum + 1) >> 8) & 0xFF
-                byte_entry = b'{0}{1}'.format(higher_btyte, lower_byte)
+                byte_entry = currClusterNum.to_bytes(2, byteorder='little')
                 set_fat_entry(disk_file_name, byte_entry, currClusterNum)
+                currClusterNum += 1
             
             set_fat_entry(disk_file_name, b'\xF8\xFF', currClusterNum)
             disk_file.seek(start_cluster * CLUSTER_SIZE)
@@ -104,7 +103,7 @@ def main():
     #DONT CHANGE FIRST FEW LINES
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
     write_fat(DISK_NAME)
-    filename = os.path.join(os.getcwd(), 'src/Lib/stdlib/libstdcxx.o')
+    filename = os.path.join(os.getcwd(), 'src/Binutils/hello_world.o')
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
     currClusterNum = ROOT_CLUSTER + 2 #We start with the cluster after BIN
