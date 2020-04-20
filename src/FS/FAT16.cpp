@@ -45,9 +45,14 @@ File *FAT16::getFile(const char path[]){
     return filePtr;
 }
 
-int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
-    int clusterNum = file.startSector() / SECTORS_PER_CLUSTER;
-    int clusterOffset = file.startSector() % SECTORS_PER_CLUSTER;
+int FAT16::readNBytes(const char path[], char buffer[], int nBytes){
+    FAT16_DirEnt parent = followPath(path, 1);
+    FAT16_DirEnt file = followPath(path, 0);
+    if (isNullDirEnt(parent) || isNullDirEnt(file)) {
+        return -1;
+    }
+    int clusterNum = file.startingCluster;
+    int clusterOffset = 0;
     KVector<FATEntry> clustersToRead = followFATEntries(clusterNum);
 
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
@@ -79,10 +84,17 @@ int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
 }
 
 // This also handles allocating new sectors if needed
-int FAT16::writeNBytes(const File &file, char buffer[], int nBytes){
-    int clusterNum = file.startSector() / SECTORS_PER_CLUSTER;
-    int clusterOffset = file.startSector() % SECTORS_PER_CLUSTER;
+int FAT16::writeNBytes(const char path[], char buffer[], int nBytes){
+    FAT16_DirEnt parent = followPath(path, 1);
+    FAT16_DirEnt file = followPath(path, 0);
+    if (isNullDirEnt(parent) || isNullDirEnt(file)) {
+        return -1;
+    }
+    int clusterNum = file.startingCluster;
+    int clusterOffset = 0;
 
+    FAT16_DirEnt dirEnt;
+    setFilename(dirEnt, file.fileName);
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
     for (int i = 0; i < numSectors; i++) {
         if (clusterOffset >= SECTORS_PER_CLUSTER) {

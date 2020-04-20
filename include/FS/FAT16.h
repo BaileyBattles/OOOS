@@ -64,8 +64,8 @@ public:
     // FileSystem Interface //
     //////////////////////////
     virtual File *getFile(const char path[]);
-    virtual int readNBytes(const File &file, char buffer[], int nBytes);
-    virtual int writeNBytes(const File &file, char buffer[], int nBytes);
+    virtual int readNBytes(const char path[], char buffer[], int nBytes);
+    virtual int writeNBytes(const char path[], char buffer[], int nBytes);
     virtual int mkdir(const char path[]);
     virtual int mkfile(const char path[]);
 
