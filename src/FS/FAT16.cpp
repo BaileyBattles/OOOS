@@ -1,6 +1,5 @@
 #include "Drivers/Screen.h"
 #include "FS/FAT16.h"
-#include "Lib/KVector.h"
 #include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
 #include "Util/String.h"
@@ -57,13 +56,19 @@ int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
     for (int i = 0; i < clustersToRead.size(); i++) {
         int clusterToRead = clustersToRead.get(i);
         for (int sectorNum = 0; sectorNum < SECTORS_PER_CLUSTER; sectorNum++) {
-            int status = readSector(clusterToRead, sectorNum, 
-                                    buffer + sectorsRead * FAT16_SECTOR_SIZE);
+            u32 sector = clusterNum * SECTORS_PER_CLUSTER + sectorNum;
+            u32 bytesToRead = FAT16_SECTOR_SIZE;
+            if (nBytes < FAT16_SECTOR_SIZE)
+                bytesToRead = nBytes;
+            int status = fileDevice->readSector(sector, 
+                                    buffer + sectorsRead * FAT16_SECTOR_SIZE,
+                                    bytesToRead);
             if (status == -1) {
                 kprint("FAT16:readNBytes: Write Sector failed\n");
                 return -1;
             }
             sectorsRead++;
+            nBytes -= FAT16_SECTOR_SIZE;
             if (sectorsRead == numSectors) {
                 return 0;
             }
