@@ -3,9 +3,9 @@
 
 char *int_to_ascii(int n, char buffer[]);
 int strlen(const char buff[]);
-//Returns -1 if string 1 > string 2
+//Returns -1 if string 1 < string 2
 //Returns 0 if they are equal
-//Returns 1 if string 2 > string1
+//Returns 1 if string 1 > string2
 int strCmp(const char string1[], const char string2[]);
 
 #endif

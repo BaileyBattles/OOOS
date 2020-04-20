@@ -142,7 +142,7 @@ private:
     //Returns 0 if it should be places at FATSector + 0
     //Returns 1 if it should be places at FATSector + 32
     //Returns 2 if it should be placed at FATSector + 32*2 etc..
-    u32 getSectorOffsetForDirEnt(const char FATSector[]);
+    u32 getSectorOffsetForDirEnt(const char FATSector[], FAT16_DirEnt dirEnt);
     bool fileExistsInCluster(const char fileName[], u32 clusterNum);
     void setFourBytes(u32 value, char buffer[], u32 offset);
     FAT16_DirEnt getDirEntFromSectorBuff(const char FATSector[], u32 index);
@@ -158,7 +158,7 @@ private:
     //get the cluster of Dir2 in the path we would call /Dir1/Dir2
     //   getDirCluster("Dir2", Dir1.cluster())
     int getDirEntInCluster(FAT16_DirEnt &dirEnt, int parentCluster);
-
+    int compareDirEntNames(FAT16_DirEnt dirEnt1, FAT16_DirEnt dirEnt2);
     //Returns the cluster stopBefore ahead of the last dirent
     //Example /DIR1/DIR2 stopBefore = 1 would return DIR1s cluster
     FAT16_DirEnt followPath(const char path[], int stopBefore);
