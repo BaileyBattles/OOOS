@@ -156,7 +156,9 @@ FAT16_DirEnt FAT16::followPath(const char path[], int stopBefore) {
     int currCluster = rootCluster;
     FAT16_DirEnt currEntry = rootDirEnt();
     for (int i = 0; i < pathList.size() - stopBefore; i++) {
-        FAT16_DirEnt dirEnt = getDirEntInCluster(pathList.get(i), currCluster);
+        FAT16_DirEnt dirEnt;
+        setFilename(dirEnt, pathList.get(i));
+        int dirEntIndex = getDirEntInCluster(dirEnt, currCluster);
         if (isNullDirEnt(dirEnt)) {
             kprint("No such file or directory ");
             kprint(path);
@@ -392,17 +394,6 @@ int FAT16::makeDotAndDoubleDot(int parentCluster, int dirCluster) {
     }
 }
 
-FAT16_DirEnt FAT16::getDirEntFromSectorBuff(const char FATSector[], u32 index){
-    FAT16_DirEnt dirEnt;
-    u32 byteOffset = index * sizeof(FAT16_DirEnt);
-    if (byteOffset > FAT16_SECTOR_SIZE) {
-        kprint("FAT16:Cannot read index from sector.  Too large\n");
-        return dirEnt;
-    }
-    memory_copy(FATSector + byteOffset, (char*)&dirEnt, sizeof(FAT16_DirEnt));
-    return dirEnt;
-}
-
 u32 FAT16::getSectorOffsetForDirEnt(const char FATSector[]) {
     for (int i = 0; i < FAT16_SECTOR_SIZE; i += sizeof(FAT16_DirEnt)) {
         bool isSpace = true;
@@ -434,12 +425,15 @@ u32 FAT16::popFreeCluster() {
 }
 
 bool FAT16::fileExistsInCluster(const char fileName[], u32 clusterNum) {
-    return !isNullDirEnt(getDirEntInCluster(fileName, clusterNum));
+    FAT16_DirEnt dirEnt;
+    setFilename(dirEnt, fileName);
+    return (getDirEntInCluster(dirEnt, clusterNum) == -1);
 }
 
 
 
-FAT16_DirEnt FAT16::getDirEntInCluster(const char dirName[], int parentCluster){
+int FAT16::getDirEntInCluster(FAT16_DirEnt &dirEnt, int parentCluster){
+    const char* dirName = dirEnt.fileName;
     for (int sector = 0; sector < SECTORS_PER_CLUSTER; sector++) {
         char FATSector[FAT16_SECTOR_SIZE];
         readSector(parentCluster, sector, FATSector);
@@ -447,11 +441,12 @@ FAT16_DirEnt FAT16::getDirEntInCluster(const char dirName[], int parentCluster){
             FAT16_DirEnt entry;
             memory_copy(FATSector + i, (char *)&entry, sizeof(FAT16_DirEnt));
             if (strCmp(entry.fileName, dirName) == 0) {
-                return entry;
+                dirEnt = entry;
+                return i / sizeof(FAT16_DirEnt);
             }
         }
     }
-    return nullDirEnt();
+    return -1;
 }
 
 KVector<char*> FAT16::getPathList(const char path[], int pathLength) {
@@ -530,6 +525,11 @@ bool FAT16::isNullDirEnt(FAT16_DirEnt dirEnt) {
     if (dirEnt.fileExt[0] != '\0')
         return false;
     return true;
+}
+
+void FAT16::setFilename(FAT16_DirEnt &dirEnt, const char filename[]) {
+    int length = strlen(filename) < FAT16_MAX_NAME_LEN ? strlen(filename) : FAT16_MAX_NAME_LEN;
+    memory_copy(filename, dirEnt.fileName, length);
 }
 
 bool FAT16::isArchive(FAT16_DirEnt dirEnt) {

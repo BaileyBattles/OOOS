@@ -157,7 +157,7 @@ private:
     //Example Suppose have the cluster of Dir1 and we want to
     //get the cluster of Dir2 in the path we would call /Dir1/Dir2
     //   getDirCluster("Dir2", Dir1.cluster())
-    FAT16_DirEnt getDirEntInCluster(const char path[], int parentCluster);
+    int getDirEntInCluster(FAT16_DirEnt &dirEnt, int parentCluster);
 
     //Returns the cluster stopBefore ahead of the last dirent
     //Example /DIR1/DIR2 stopBefore = 1 would return DIR1s cluster
@@ -170,6 +170,7 @@ private:
     FAT16_DirEnt rootDirEnt();
     FAT16_DirEnt nullDirEnt();
     bool isNullDirEnt(FAT16_DirEnt dirEnt);
+    void setFilename(FAT16_DirEnt &dirEnt, const char filename[]);
 
     bool isArchive(FAT16_DirEnt dirEnt);
     bool isDir(FAT16_DirEnt dirEnt);
