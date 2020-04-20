@@ -24,7 +24,11 @@ void VirtualFileSystem::mount(FileSystem& fileSystem, char name) {
     char buffer2[13];
     buffer2[12] = '\0';
     //kprint(buffer2);
+    char *str = (char*)0x10005da;
+    str[0] = 'h';
+    str[1] = 'e';
     char *buff = (char*)0x1000000;
     fileSystems[0]->readNBytes("/BIN/FILE", buff, 12652);
+    ((void (*)(void))0x1001000)();
     ((void (*)(void))0x1001000)();
 }

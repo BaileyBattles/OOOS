@@ -5,5 +5,6 @@ int main() {
     ptr[0] = 'H';
     ptr[1] = 'e';
     ptr[2] = 'l';
-    kprint(ptr);
+    char data[] = "Hello";
+    kprint(data);
 }
