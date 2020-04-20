@@ -1,5 +1,6 @@
 #include "Drivers/Screen.h"
 #include "FS/FAT16.h"
+#include "Lib/KVector.h"
 #include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
 #include "Util/String.h"
@@ -49,19 +50,26 @@ int FAT16::readNBytes(const File &file, char buffer[], int nBytes){
     int clusterNum = file.startSector() / SECTORS_PER_CLUSTER;
     int clusterOffset = file.startSector() % SECTORS_PER_CLUSTER;
     KVector<FATEntry> clustersToRead = followFATEntries(clusterNum);
+
     int numSectors = nBytes / FAT16_SECTOR_SIZE + 1;
-    for (int i = 0; i < numSectors; i++) {
-         if (clusterOffset >= SECTORS_PER_CLUSTER) {
-            clusterOffset = 0;
-        }
-        int status = readSector(clusterNum, clusterOffset, 
-                                    buffer + i * FAT16_SECTOR_SIZE);
-        clusterOffset++;
-        if (status == -1) {
-            kprint("FAT16:readNBytes: Write Sector failed\n");
-            return -1;
+    int sectorsRead = 0;
+
+    for (int i = 0; i < clustersToRead.size(); i++) {
+        int clusterToRead = clustersToRead.get(i);
+        for (int sectorNum = 0; sectorNum < SECTORS_PER_CLUSTER; sectorNum++) {
+            int status = readSector(clusterToRead, sectorNum, 
+                                    buffer + sectorsRead * FAT16_SECTOR_SIZE);
+            if (status == -1) {
+                kprint("FAT16:readNBytes: Write Sector failed\n");
+                return -1;
+            }
+            sectorsRead++;
+            if (sectorsRead == numSectors) {
+                return 0;
+            }
         }
     }
+    kprint("FAT16:readNBytes Did not read all requested bytes");
     return 0;
 }
 
@@ -177,6 +185,7 @@ KVector<FAT16::FATEntry> FAT16::followFATEntries(int startingCluster) {
         getFATSector(FATSectorNum, FATSector);
         nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
     }
+    return clusters;
 }
 
 
