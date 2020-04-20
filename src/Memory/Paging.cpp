@@ -46,6 +46,10 @@ void setPTEPresent(PageTableEntry &entry) {
     entry = entry | 0x1;
 }
 
+void setPTENotPresent(PageTableEntry &entry) {
+    entry = entry & ~0x1;
+}
+
 int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress){
     entry = entry & ~0x7ffff000;
     entry = entry | pteBaseAddress;
@@ -91,20 +95,20 @@ int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress){
 // PageTableManager //
 //////////////////////
 
-u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
+u32 PageTableManager::setContinuousPageTable(PageTable &pageTable, u32 baseAddress){
     u32 currentAddress = baseAddress;
     for (int i = 0; i < NUM_PAGETABLE_ENTRIES; i++){
-        if (currentAddress == 0x30000000) {
-            setPTEBaseAddress(pageTable.entry[i], 0x800000);
-            setPTEPresent(pageTable.entry[i]);
-        }
-        else {
-            setPTEBaseAddress(pageTable.entry[i], currentAddress);
-            setPTEPresent(pageTable.entry[i]);
-        }
+        setPTEBaseAddress(pageTable.entry[i], currentAddress);
+        setPTEPresent(pageTable.entry[i]);
         currentAddress += 4*KB;
     }
     return currentAddress;
+}
+
+void PageTableManager::mapPage(u32 virtualAddress, u32 physicalAddress) {
+    PageTableEntry *pte = getPageTableEntry(virtualAddress);
+    setPTEBaseAddress(*pte, physicalAddress);
+    setPTEPresent(*pte);
 }
 
 void PageTableManager::initialize() {
@@ -113,11 +117,10 @@ void PageTableManager::initialize() {
 
     u32 baseAddress = 0;
 
-
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         pageTablePtrs[i] = (PageTable *)KMM.pagemalloc();
-        baseAddress = setContinuousPageTable(*pageTablePtrs[i], baseAddress);
     }
+
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         setPDEPresent(pageDirectoryPtr->entry[i]);
@@ -125,12 +128,25 @@ void PageTableManager::initialize() {
         setPDEBaseAddress(pageDirectoryPtr->entry[i], (u32)pageTablePtrs[i]);
     }
 
+    //Map first 256 GB of kernel to 0-256 GB physical
+    int numPhysicalPages = TOTAL_MEMORY / 4096;
+
+    for (int i = 0; i < numPhysicalPages / 2; i++) {
+        u32 offset = i*4096;
+        mapPage(KERNEL_START_VIRTUAL + offset, offset);
+        mapPage(USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2));
+    }
+    mapPage(0, 0);
+    mapPage(4096, 4096);
+
+    PageTableEntry *pte = getPageTableEntry(0);
+
+    registerISRHandler(this, 14);
     u32 val = read_cr0();
     write_cr3((u32)pageDirectoryPtr);
     initialize_cr0();
-    registerISRHandler(this, 14);
 
-    u32 *ptr = (u32*)0x30000002;
+    u32 *ptr = (u32*)((TOTAL_MEMORY / 2) - 5);
     *ptr = 25;
     u32 value = *ptr;
 
@@ -142,18 +158,18 @@ void PageTableManager::handleInterrupt(registers_t r) {
     kprint("Page Fault\n");
 }
 
-PageTableEntry PageTableManager::getPageTableEntry(u32 address) {
-    u32 pdIndex = address >> 22;
+PageTableEntry *PageTableManager::getPageTableEntry(u32 virtualAddress) {
+    u32 pdIndex = virtualAddress >> 22;
     PageDirectoryEntry pde = pageDirectoryPtr->entry[pdIndex];
     PageTable *pageTable = (PageTable *)pdeBaseAddress(pde);
-    u32 ptIndex = (address >> 12) & 0x3FF;
-    return pageTable->entry[ptIndex];
+    u32 ptIndex = (virtualAddress >> 12) & 0x3FF;
+    return &pageTable->entry[ptIndex];
 }
 
 u32 PageTableManager::physicalAddress(u32 virtualAddress) {
-    PageTableEntry pte = getPageTableEntry(virtualAddress);
-    u32 baseAddress = pteBaseAddress(pte);
-    return pte + (virtualAddress & 0xFFF);
+    PageTableEntry *pte = getPageTableEntry(virtualAddress);
+    u32 baseAddress = pteBaseAddress(*pte);
+    return *pte + (virtualAddress & 0xFFF);
 }
 
 u32 PageTableManager::read_cr3()

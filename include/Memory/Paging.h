@@ -9,6 +9,9 @@
 //Need to fix this with info from GRUB
 #define TOTAL_MEMORY 0x20000000
 
+#define KERNEL_START_VIRTUAL 0
+#define USERSPACE_START_VIRTUAL 0x80000000
+
 #define PAGE_SIZE 4*KB
 #define NUM_PAGETABLE_ENTRIES 1024
 #define NUM_PAGEDIR_ENTRIES 1024
@@ -40,6 +43,7 @@ u32 pteBaseAddress(PageTableEntry entry);
 
 //Setters
 void setPTEPresent(PageTableEntry &entry);
+void setPTENotPresent(PageTableEntry &entry);
 //returns 0 on success, -1 on failure
 int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress);
 
@@ -73,12 +77,14 @@ private:
     void initialize_cr0();
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
+    void mapPage(u32 virtualAddress, u32 physicalAddress);
+
     u32 read_cr3();
     u32 read_cr2();
     PageDirectory *pageDirectoryPtr;
     PageTable *pageTablePtrs[NUM_PAGETABLES];
-
-    PageTableEntry getPageTableEntry(u32 address);
+    u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress);
+    PageTableEntry *getPageTableEntry(u32 virtualAddress);
     u32 physicalAddress(u32 virtualAddress);
 
     u32 read_cr0();
