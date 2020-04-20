@@ -1,4 +1,5 @@
 import base64
+import math
 import os
 
 FAT_ENTRY_SIZE = 2 #bytes
@@ -47,7 +48,17 @@ def set_fat_entry(filename, entry, index):
     with open(filename, 'r+b') as f:
         f.seek(FAT_START_CLUSTER * SECTORS_PER_CLUSTER * SECTOR_SIZE + FAT_ENTRY_SIZE * index)
         f.write(entry)
-    
+
+def write_fat(disk_file_name):
+    fat_entries_per_sector = SECTOR_SIZE / FAT_ENTRY_SIZE
+    num_fat_clusters = TOTAL_CLUSTERS / (fat_entries_per_sector * SECTORS_PER_CLUSTER)
+    num_fat_clusters = math.ceil(num_fat_clusters)
+    with open(disk_file_name, 'r+b') as f:
+        f.seek(FAT_START_CLUSTER * SECTORS_PER_CLUSTER * SECTOR_SIZE)
+        reserved = b'\xF0\xFF'
+        for i in range(num_fat_clusters):
+            f.write(reserved)
+
 def write_fileentry_to_bin(disk_file_name, filename, start_cluster, filenumber):
     with open(disk_file_name, 'r+b') as disk_file:
         b = bytearray()
@@ -89,7 +100,7 @@ def main():
     #STOP BEING LAZY AND FIX IT
     #DONT CHANGE FIRST FEW LINES
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
-
+    write_fat(DISK_NAME)
     filename = os.path.join(os.getcwd(), 'data/copy_file.txt')
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
