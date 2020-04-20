@@ -61,7 +61,7 @@ int FAT16::readNBytes(const char path[], char buffer[], int nBytes){
     for (int i = 0; i < clustersToRead.size(); i++) {
         int clusterToRead = clustersToRead.get(i);
         for (int sectorNum = 0; sectorNum < SECTORS_PER_CLUSTER; sectorNum++) {
-            u32 sector = clusterNum * SECTORS_PER_CLUSTER + sectorNum;
+            u32 sector = clusterToRead * SECTORS_PER_CLUSTER + sectorNum;
             u32 bytesToRead = FAT16_SECTOR_SIZE;
             if (nBytes < FAT16_SECTOR_SIZE)
                 bytesToRead = nBytes;
@@ -215,6 +215,7 @@ KVector<FAT16::FATEntry> FAT16::followFATEntries(int startingCluster) {
         getFATSector(FATSectorNum, FATSector);
         nextClusterPtr = (FATEntry*)(FATSector + FATSectorOffset*sizeof(FATEntry));
     }
+    clusters.push(*nextClusterPtr);
     return clusters;
 }
 
