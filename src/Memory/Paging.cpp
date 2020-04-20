@@ -111,6 +111,11 @@ void PageTableManager::mapPage(u32 virtualAddress, u32 physicalAddress) {
     setPTEPresent(*pte);
 }
 
+void causeExamplePageFault() {
+    u32 *ptr = (u32*)(USERSPACE_START_VIRTUAL - 5);
+    *ptr = 25;
+}
+
 void PageTableManager::initialize() {
 
     pageDirectoryPtr = (PageDirectory *)KMM.pagemalloc();
@@ -136,21 +141,11 @@ void PageTableManager::initialize() {
         mapPage(KERNEL_START_VIRTUAL + offset, offset);
         mapPage(USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2));
     }
-    mapPage(0, 0);
-    mapPage(4096, 4096);
-
-    PageTableEntry *pte = getPageTableEntry(0);
-
     registerISRHandler(this, 14);
-    u32 val = read_cr0();
     write_cr3((u32)pageDirectoryPtr);
     initialize_cr0();
 
-    u32 *ptr = (u32*)((TOTAL_MEMORY / 2) - 5);
-    *ptr = 25;
-    u32 value = *ptr;
-
-    u32 e = physicalAddress((u32)ptr);
+    //causeExamplePageFault();
 }
 
 void PageTableManager::handleInterrupt(registers_t r) {
