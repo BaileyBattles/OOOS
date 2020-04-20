@@ -84,9 +84,10 @@ def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
     with open(filename, 'rb') as data_file:
         with open(disk_file_name, 'r+b') as disk_file:
             contents = data_file.read()
-            num_clusters = int(len(contents) / (CLUSTER_SIZE))
+            num_clusters = int(len(contents) / (CLUSTER_SIZE)) + 1
             for i in range(num_clusters - 1):
-                byte_entry = currClusterNum.to_bytes(2, byteorder='little')
+                nextCluster = currClusterNum + 1
+                byte_entry = nextCluster.to_bytes(2, byteorder='little')
                 set_fat_entry(disk_file_name, byte_entry, currClusterNum)
                 currClusterNum += 1
             

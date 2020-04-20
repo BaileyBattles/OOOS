@@ -13,4 +13,4 @@ OBJ = 		[$(wildcard ../Kernel/*.o       \
 				)]
 
 default:
-	$(CC) $(CXXFLAGS) -o hello_world.o hello_world.cpp ../Drivers/Screen.o ../Sys/Io.o ../Util/Memcpy.o -Ttext 0x1FFFFFFF 	
+	$(CC) $(CXXFLAGS) -o hello_world.o hello_world.cpp ../Drivers/Screen.o ../Sys/Io.o ../Util/Memcpy.o -Ttext 0x1000000 	
