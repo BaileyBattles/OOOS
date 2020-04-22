@@ -4,6 +4,7 @@
 #include "Kernel/Types.h"
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
+#include "Process/Process.h"
 
 void initializePageTableEntry(PageTableEntry entry, u32 data) {
     entry = data;
@@ -149,6 +150,11 @@ void PageTableManager::initialize() {
     initialize_cr0();
 
     //causeExamplePageFault();
+}
+
+void PageTableManager::pageTableSwitch(Process *process) {
+    const PagingStructure *structure = process->getPagingStructure();
+    write_cr3((u32)structure->pageDirectoryPtr);
 }
 
 void PageTableManager::handleInterrupt(registers_t r) {

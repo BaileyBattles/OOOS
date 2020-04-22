@@ -66,6 +66,9 @@ void setPDEPresent(PageDirectoryEntry &entry);
 void setPDEWriteable(PageDirectoryEntry &entry);
 int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress);
 
+
+class Process;
+
 #define PTM PageTableManager::the()
 
 class PageTableManager : public InterruptHandlingObject{
@@ -78,7 +81,7 @@ public:
     }
     PagingStructure initializeProcessPageTable();
     void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress);
-
+    void pageTableSwitch(Process* process);
 private:
     PageTableManager(){};
     
