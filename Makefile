@@ -29,7 +29,7 @@ kernel.iso: kernel.elf
 	touch iso/boot/grub/grub.cfg 
 
 	echo 'set timeout=0'                  >  iso/boot/grub/grub.cfg
-	echo 'set default=0'                >> iso/boot/grub/grub.cfg
+	echo 'set default=0'                  >> iso/boot/grub/grub.cfg
 	echo 'menuentry "OOOS" {'             >> iso/boot/grub/grub.cfg
 	echo '   multiboot /boot/kernel.elf'  >> iso/boot/grub/grub.cfg
 	echo '}'                              >> iso/boot/grub/grub.cfg

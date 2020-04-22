@@ -16,11 +16,14 @@ const PagingStructure* Process::getPagingStructure() {
 void Process::exec() {
     loadElf(this->path);
     PageTableManager::the().pageTableSwitch(this);
-    ((void (*)(void))0x1001000)();
+    ((void (*)(void))entryAddress)();
 }
 
 int Process::loadElf(const char path[]) {
     int fd = VFS.open(path, 0);
     char *buff = (char*)0x1000000;
     VFS.read(fd, buff, 12652);
+    Elf32_Ehdr header;
+    memory_copy(buff, (char *)&header, sizeof(Elf32_Ehdr));
+    entryAddress = header.e_entry;
 }
