@@ -116,21 +116,22 @@ void causeExamplePageFault() {
     *ptr = 25;
 }
 
+PageDirectory *PageTableManager::initializeProcessPageTable() {
+
+}
+
 void PageTableManager::initialize() {
-
-    pageDirectoryPtr = (PageDirectory *)KMM.pagemalloc();
-
-    u32 baseAddress = 0;
+    pagingStructure.pageDirectoryPtr = (PageDirectory *)KMM.pagemalloc();
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
-        pageTablePtrs[i] = (PageTable *)KMM.pagemalloc();
-    }
-
-
+        pagingStructure.pageTablePtrs[i] = (PageTable *)KMM.pagemalloc();
+    }    
+    
     for (int i = 0; i < NUM_PAGETABLES; i++) {
-        setPDEPresent(pageDirectoryPtr->entry[i]);
-        setPDEWriteable(pageDirectoryPtr->entry[i]);
-        setPDEBaseAddress(pageDirectoryPtr->entry[i], (u32)pageTablePtrs[i]);
+        setPDEPresent(pagingStructure.pageDirectoryPtr->entry[i]);
+        setPDEWriteable(pagingStructure.pageDirectoryPtr->entry[i]);
+        setPDEBaseAddress(pagingStructure.pageDirectoryPtr->entry[i], 
+                                (u32)pagingStructure.pageTablePtrs[i]);
     }
 
     //Map first 256 GB of kernel to 0-256 GB physical
@@ -142,7 +143,7 @@ void PageTableManager::initialize() {
         mapPage(USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2));
     }
     registerISRHandler(this, 14);
-    write_cr3((u32)pageDirectoryPtr);
+    write_cr3((u32)pagingStructure.pageDirectoryPtr);
     initialize_cr0();
 
     //causeExamplePageFault();
@@ -155,7 +156,7 @@ void PageTableManager::handleInterrupt(registers_t r) {
 
 PageTableEntry *PageTableManager::getPageTableEntry(u32 virtualAddress) {
     u32 pdIndex = virtualAddress >> 22;
-    PageDirectoryEntry pde = pageDirectoryPtr->entry[pdIndex];
+    PageDirectoryEntry pde = pagingStructure.pageDirectoryPtr->entry[pdIndex];
     PageTable *pageTable = (PageTable *)pdeBaseAddress(pde);
     u32 ptIndex = (virtualAddress >> 12) & 0x3FF;
     return &pageTable->entry[ptIndex];

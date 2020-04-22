@@ -23,9 +23,15 @@ typedef u32 PageDirectoryEntry;
 typedef struct {
     PageDirectoryEntry entry[NUM_PAGETABLES];
 } PageDirectory;
+
 typedef struct {
     PageTableEntry entry[NUM_PAGETABLE_ENTRIES];
 } PageTable;
+
+typedef struct {
+    PageDirectory *pageDirectoryPtr;
+    PageTable *pageTablePtrs[NUM_PAGETABLES];
+} PagingStructure;
 
 void initializePageTableEntry(PageTableEntry entry, u32 data);
 void initializePageDirectoryEntry(PageDirectoryEntry entry, u32 data);
@@ -70,6 +76,7 @@ public:
         static PageTableManager instance;
         return instance;
     }
+    PageDirectory* initializeProcessPageTable();
 
 private:
     PageTableManager(){};
@@ -81,8 +88,7 @@ private:
 
     u32 read_cr3();
     u32 read_cr2();
-    PageDirectory *pageDirectoryPtr;
-    PageTable *pageTablePtrs[NUM_PAGETABLES];
+    PagingStructure pagingStructure;
     u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress);
     PageTableEntry *getPageTableEntry(u32 virtualAddress);
     u32 physicalAddress(u32 virtualAddress);
