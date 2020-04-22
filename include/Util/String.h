@@ -3,6 +3,7 @@
 
 char *int_to_ascii(int n, char buffer[]);
 int strlen(const char buff[]);
+void strcpy(const char source[], char dest[]);
 //Returns -1 if string 1 < string 2
 //Returns 0 if they are equal
 //Returns 1 if string 1 > string2

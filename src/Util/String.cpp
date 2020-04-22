@@ -30,6 +30,17 @@ int strlen(const char buff[]) {
     return len;
 }
 
+void strcpy(const char source[], char dest[]) {
+    char curr = source[0];
+    int i = 0;
+    while (curr != '\0') {
+        dest[i] = curr;
+        i++;
+        curr = source[i];
+    }
+    dest[i] = '\0';
+}
+
 int strCmp(const char string1[], const char string2[]) {
     int len1 = strlen(string1);
     int len2 = strlen(string2);
