@@ -5,6 +5,7 @@ C_SOURCES = $(wildcard src/Kernel/*.cpp       \
 					   src/Sys/*.cpp          \
 					   src/Util/*.cpp         \
 					   src/Memory/*.cpp       \
+					   src/Process/*.cpp      \
 					   src/Lib/*.cpp          \
 					   src/Lib/stdlib/*.cpp   \
 					   )

@@ -10,6 +10,7 @@
 #include "Kernel/Multiboot.h"
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
+#include "Process/Process.h"
 #include "Util/String.h"
 
 //Global Variables
@@ -74,19 +75,17 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     PTM.initialize();
 
-    //PCI::the().scan();
-
     IDE ide0(IDE0_PORT);
     ide0.initialize();
-    char path[] = "/dir1/dir2/dir3";
+
     FAT16 f16(ide0);
     FileSystem *fileSystem = (FileSystem*)&f16;
-    VFS.mount(*fileSystem, 'A');
-    int fd = VFS.open("/BIN/FILE", 0);
-    char *buff = (char*)0x1000000;
-    VFS.read(fd, buff, 12652);
-    ((void (*)(void))0x1001000)();
-    kernelLoop();
 
+    VFS.mount(*fileSystem, 'A');
+
+    Process p1("/BIN/FILE");
+    p1.exec();
+
+    kernelLoop();
 }
 

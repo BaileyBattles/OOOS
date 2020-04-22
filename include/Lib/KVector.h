@@ -1,6 +1,7 @@
 #ifndef __KVECTOR_H__
 #define __KVECTOR_H__
 
+#include "Drivers/Screen.h"
 #include "Kernel/Types.h"
 #include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
