@@ -11,7 +11,10 @@ public:
 
     const PagingStructure *getPagingStructure();
 private:
+    char *path;
+
     PagingStructure pagingStructure;
+    int loadElf(const char path[]);
 };
 
 

@@ -159,7 +159,7 @@ void PageTableManager::pageTableSwitch(Process *process) {
 
 void PageTableManager::handleInterrupt(registers_t r) {
     u32 val = read_cr2();
-    kprint("Page Fault\n");
+    //kprint("Page Fault\n");
 }
 
 PageTableEntry *PageTableManager::getPageTableEntry(PagingStructure *structure, u32 virtualAddress) {

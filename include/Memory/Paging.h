@@ -81,7 +81,10 @@ public:
     }
     PagingStructure initializeProcessPageTable();
     void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress);
+   
+    //this switches the Addressing to the process's paging strucutre
     void pageTableSwitch(Process* process);
+
 private:
     PageTableManager(){};
     
