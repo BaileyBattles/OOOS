@@ -11,9 +11,16 @@ typedef struct {
     int fileSystem;
 } FileInfo;
 
+#define VFS VirtualFileSystem::the()
+
 class VirtualFileSystem {
-public:    
-    VirtualFileSystem();
+public:  
+    static VirtualFileSystem& the()
+    {
+        static VirtualFileSystem instance; // Guaranteed to be destroyed.
+                                // Instantiated on first use.
+        return instance;
+    }
     void mount(FileSystem &fileSystem, char name);
     int open(const char path[], int flags);
     int read(int fd, char buffer[], int nbytes);
@@ -22,6 +29,7 @@ public:
     int ls(const char path[]);
 
 private:
+    VirtualFileSystem();
     char names[MAX_NUM_FILESYSTEMS];
     FileSystem *fileSystems[MAX_NUM_FILESYSTEMS];
     int currNumFileSystems;
