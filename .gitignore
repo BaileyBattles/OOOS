@@ -4,3 +4,4 @@
 *.iso
 iso/
 src/*/*.o
+src/*/*/*.o
