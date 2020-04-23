@@ -75,6 +75,9 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     gdt_init();
 
+    u32 val;
+    __asm__("movl %%es,%0" : "=r"(val));
+
 
     InterruptManager interruptManager;
     Keyboard keyboard;
