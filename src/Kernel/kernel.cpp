@@ -1,3 +1,4 @@
+#include "CPU/Gdt.h"
 #include "CPU/InterruptManager.h"
 #include "Drivers/FileDevice.h"
 #include "Drivers/IDE.h"
@@ -71,6 +72,10 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     
     initializeKMM();
     testKMM();
+
+    buildGdt();
+    //loadGdt();
+
 
     InterruptManager interruptManager;
     Keyboard keyboard;
