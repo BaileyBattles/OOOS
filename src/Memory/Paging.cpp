@@ -153,8 +153,9 @@ void PageTableManager::initialize() {
 }
 
 void PageTableManager::pageTableSwitch(Process *process) {
-    const PagingStructure *structure = process->getPagingStructure();
+    PagingStructure *structure = process->getPagingStructure();
     write_cr3((u32)structure->pageDirectoryPtr);
+    PageTableEntry *entry = getPageTableEntry(structure, USERSPACE_START_VIRTUAL);
 }
 
 void PageTableManager::handleInterrupt(registers_t r) {

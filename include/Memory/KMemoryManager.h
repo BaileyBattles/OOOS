@@ -3,9 +3,10 @@
 
 #include "Kernel/Types.h"
 #include "Memory/Paging.h"
+#include "Process/Process.h"
 
-#define NUM_PAGES 1032 //Should be a multiple of 8 for simplicity
-#define KERNEL_HEAP_SIZE 10*KB
+#define NUM_PAGES 1032 * MAX_NUM_PROCESSES //Should be a multiple of 8 for simplicity
+#define KERNEL_HEAP_SIZE 100*KB
 
 #define KMALLOC_SIZE 1
 #define PAGEMALLOC_SIZE 4*KB
@@ -21,11 +22,6 @@ public:
         static KMemoryManager instance; // Guaranteed to be destroyed.
                                 // Instantiated on first use.
         return instance;
-    }
-
-    u32 theAddress() {
-        static KMemoryManager instance;
-        return (u32)&instance;
     }
 
     void initialize(u32 address);

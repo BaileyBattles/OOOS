@@ -16,11 +16,15 @@ SECTIONS
   }
   .data ALIGN (0x1000) : {
     *(.data)
+    edata = .;
   }
   .bss : {
     sbss = .;
     *(COMMON)
     *(.bss)
+    /*All the static objects are of the form .bss._*.  Use readelf to see */
+    *(.bss._*)
+
     ebss = .;
   }
 }

@@ -4,6 +4,8 @@
 #include "Kernel/Types.h"
 #include "Memory/Paging.h"
 
+#define MAX_NUM_PROCESSES 100
+
 #define EI_NIDENT 16
 typedef u32	    Elf32_Addr;
 typedef u16	    Elf32_Half;
@@ -34,7 +36,7 @@ public:
     Process(const char path[]);
     void exec();
 
-    const PagingStructure *getPagingStructure();
+    PagingStructure *getPagingStructure();
 private:
     char *path;
     u32 entryAddress;

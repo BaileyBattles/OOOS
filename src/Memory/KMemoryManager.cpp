@@ -10,14 +10,15 @@
 
 
 void KMemoryManager::initialize(u32 address){
-    address = 0x180000;
-    pagemallocStartAddress = calculateNextAllignedAddress(address, PAGE_SIZE);
-    memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
-    pagemallocBitmapLength = NUM_PAGES / 8;
-
-    kmallocStartAddress = pagemallocStartAddress + NUM_PAGES*PAGE_SIZE;
+    address = (u32)calculateNextAllignedAddress(address, PAGE_SIZE);
+    kmallocStartAddress = (void*)address;
     memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
     kmallocBitmapLength = KERNEL_HEAP_SIZE / 8;
+
+    pagemallocStartAddress = kmallocStartAddress + KERNEL_HEAP_SIZE;
+    pagemallocStartAddress = calculateNextAllignedAddress((u32)pagemallocStartAddress, PAGE_SIZE);
+    memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
+    pagemallocBitmapLength = NUM_PAGES / 8;
 }
 
 void *KMemoryManager::kmalloc(int numBytes){

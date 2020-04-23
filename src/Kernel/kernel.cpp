@@ -14,12 +14,13 @@
 #include "Util/String.h"
 
 //Global Variables
-extern unsigned long ebss;
+//extern unsigned long ebss;
 
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
 
+extern "C" unsigned long ebss;
 
 // Kernel Helper Functions
 void kernelLoop() {
