@@ -22,6 +22,8 @@ extern "C" constructor end_ctors;
 
 extern "C" unsigned long ebss;
 
+void stage2(Process *initProcess);
+
 // Kernel Helper Functions
 void kernelLoop() {
     while (true)
@@ -84,10 +86,16 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     VFS.mount(*fileSystem, 'A');
 
-    Process p1("/BIN/FILE");
-    p1.exec();
-    kprint("here");
+    Process init = Process::createInitProcess(stage2);
+    while (true) {
+        kprint("Init Process didn't get started");
+    }
+}
 
+void stage2(Process *initProcess) {
+    Process childProcess = initProcess->createChildProcess("/BIN/FILE", 0);
+    childProcess.exec();
+    kprint("here");
     kernelLoop();
 }
 

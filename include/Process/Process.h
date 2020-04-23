@@ -6,19 +6,36 @@
 #include "Process/ELFLoader.h"
 
 #define MAX_NUM_PROCESSES 100
+#define STACK_SIZE 10*KB
+
+#define KERNEL_LEVEL 0
+#define USER_LEVEL   3
+
+struct PCB {
+	u32 eip;
+	u32 esp;
+	u32 ebp;
+};
 
 class Process {
 public:
-    Process(const char path[]);
+	static Process createInitProcess(void (*func)(Process *));
+	Process createChildProcess(const char path[], int level);
+
     void exec();
 
     PagingStructure *getPagingStructure();
 private:
     char *path;
 	ELFLoader elfLoader;
+	PCB pcb;
+	Process *parent;
     
     PagingStructure pagingStructure;
     int loadElf(const char path[]);
+	void storeRegisters(PCB &processControlBlock);
+	void storeInitRegisters(PCB &processControlBlock);
+
 };
 
 

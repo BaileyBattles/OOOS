@@ -36,7 +36,7 @@ struct ELFInfo {
 
 class ELFLoader {
 public:
-    ELFInfo load(const char path[], char *buffer);
+    ELFInfo load(const char path[]);
 private:
 
 };
