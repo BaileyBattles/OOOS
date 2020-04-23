@@ -16,9 +16,6 @@ enterUserMode:
     push 0x24
     push esp
     pushf
-    pop %eax ; Get EFLAGS back into EAX. The only way to read EFLAGS is to pushf then pop.
-    or %eax, $0x200 ; Set the IF flag.
-    push %eax ; Push the new EFLAGS value back onto the stack. 
     lea eax, [addToStack]
     push eax
 

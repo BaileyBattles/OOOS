@@ -104,7 +104,7 @@ def main():
     #DONT CHANGE FIRST FEW LINES
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
     write_fat(DISK_NAME)
-    filename = os.path.join(os.getcwd(), 'src/Binutils/hello_world.o')
+    filename = os.path.join(os.getcwd(), 'src/Userland/hello_world.o')
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
     currClusterNum = ROOT_CLUSTER + 2 #We start with the cluster after BIN

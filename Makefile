@@ -48,8 +48,8 @@ storage.img: scripts/writeBINFAT16.py
 	dd if=/dev/zero of=drive/storage.img bs=1M count=1024
 	python3 '$<'
 
-binutils:
-	make -C src/Binutils
+userland:
+	make -C src/Userland
 
 # Used for debugging purposes
 kernel.elf: src/Boot/Entry.o ${OBJ}
