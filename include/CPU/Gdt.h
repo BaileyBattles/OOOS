@@ -1,31 +1,38 @@
-#ifndef GDT_H_
-#define GDT_H_
+#ifndef __GDT_H__
+#define __GDT_H__
+
+#define ACCESS_RW         0b00000010
+#define ACCESS_CODE       0b00001000
+#define ACCESS_CODEORDATA 0b00010000
+#define ACCESS_USER       0b01100000
+#define ACCESS_INMEM      0b10000000
+
+#define NUM_GDT_ENTRIES 5
+
 
 #include "Kernel/Types.h"
-
-
-typedef struct __attribute__((__packed__)) {
-	u16 limit_1;
-	u16 base_1;
-	u8	base_2;
-	u8 access;
-	u8 limit_2_flags;
-	u8 base_3;
-} gdtEntry;
 
 typedef struct __attribute__((__packed__)) {
 	u16 size;
 	u32 offset;
-} gdtDiescriptor;
+} __attribute__((__packed__)) GDTReg;
+
+typedef struct  {
+	u16 limit;
+	u16 baselo;
+	u8	basemid;
+	u8 flags;
+	u8 grand;
+	u8 basehi;
+} __attribute__((__packed__)) GDTEntry;
 
 
 
-gdtEntry encodeGdtEntry(u32 maxAddr, u32 baseAddr, u8 access,
-		u8 flags);
+GDTEntry encodeGdtEntry(u32 maxAddr, u32 baseAddr, u8 flags, u8 grand);
 
-void loadGdt(gdtEntry* toLoad, size_t size);
+void loadGdt(GDTEntry* toLoad, size_t size);
 
-void buildGdt();
+void gdt_init();
 
 
 #endif /* GDT_H_ */

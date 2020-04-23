@@ -73,8 +73,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     initializeKMM();
     testKMM();
 
-    buildGdt();
-    //loadGdt();
+    gdt_init();
 
 
     InterruptManager interruptManager;
