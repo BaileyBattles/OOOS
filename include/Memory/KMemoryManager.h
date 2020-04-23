@@ -33,8 +33,6 @@ private:
 
     u32 baseAddress;
 
-    u32 hackyFix();
-
     u8 kmallocMap[KERNEL_HEAP_SIZE / 8];
     int kmallocBitmapLength;
     void *kmallocStartAddress;
