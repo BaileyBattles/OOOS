@@ -14,27 +14,16 @@ PagingStructure* Process::getPagingStructure() {
 }
 
 void Process::exec() {
-    loadElf(this->path);
+    char *buff = (char*)0x1000000;
+    ELFInfo elfInfo = elfLoader.load(path, buff);
     PageTableManager::the().pageTableSwitch(this);
     u32 stackPointer;
     u32 basePointer;
-    char* ex = (char*)USERSPACE_START_VIRTUAL + 0x1000;
-    *ex = 'a';
-    char ex2 = *ex;
     asm("\t movl %%esp,%0" : "=r"(stackPointer));
     u32 newSp = USERSPACE_START_VIRTUAL + 0x1000;
     asm volatile("movl %%eax, %%esp" ::"a"(newSp)
                  : "memory");
-    ((void (*)(void))entryAddress)();
-    // asm volatile("movl %%eax, %%esp" ::"a"(stackPointer)
-    //              : "memory");
-}
-
-int Process::loadElf(const char path[]) {
-    int fd = VFS.open(path, 0);
-    char *buff = (char*)0x1000000;
-    VFS.read(fd, buff, 12652);
-    Elf32_Ehdr header;
-    memory_copy(buff, (char *)&header, sizeof(Elf32_Ehdr));
-    entryAddress = header.e_entry;
+    ((void (*)(void))elfInfo.entryAddress)();
+    asm volatile("movl %%eax, %%esp" ::"a"(stackPointer)
+                 : "memory");
 }
