@@ -15,8 +15,21 @@ const PagingStructure* Process::getPagingStructure() {
 
 void Process::exec() {
     loadElf(this->path);
-    PageTableManager::the().pageTableSwitch(this);
+    //PageTableManager::the().pageTableSwitch(this);
+    u32 stackPointer;
+    u32 basePointer;
+    char* ex = (char*)USERSPACE_START_VIRTUAL + 0x1000;
+    *ex = 'a';
+    char ex2 = *ex;
+    asm("\t movl %%esp,%0" : "=r"(stackPointer));
+    // asm("\t movl %%ebp,%0" : "=r"(basePointer));
+
+    u32 newSp = USERSPACE_START_VIRTUAL + 0x1000;
+    asm volatile("movl %%eax, %%esp" ::"a"(newSp)
+                 : "memory");
     ((void (*)(void))entryAddress)();
+    // asm volatile("movl %%eax, %%esp" ::"a"(stackPointer)
+    //              : "memory");
 }
 
 int Process::loadElf(const char path[]) {

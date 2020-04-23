@@ -85,6 +85,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     Process p1("/BIN/FILE");
     p1.exec();
+    kprint("here");
 
     kernelLoop();
 }
