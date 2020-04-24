@@ -32,7 +32,7 @@ void Process::exec() {
     storeRegisters(oldPcb);
     ELFInfo elfInfo = elfLoader.load(path);
     PageTableManager::the().pageTableSwitch(this);
-    pcb.esp = USERSPACE_START_VIRTUAL + 0x10000;
+    pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
                 : "memory");
     if (isUserMode) {

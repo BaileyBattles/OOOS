@@ -78,6 +78,7 @@ int print_char(char c, int col, int row, char attr) {
         row = get_offset_row(offset);
         offset = get_offset(0, row+1);
     } else {
+        vidmem = (unsigned char*) 0xB8000;
         vidmem[offset] = c;
         vidmem[offset+1] = attr;
         offset += 2;

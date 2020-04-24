@@ -2,23 +2,21 @@ ENTRY (loader)
 SECTIONS
 {
   . = 0x00100000;
-  .mbheader : {
+  .text ALIGN (4K):AT (ADDR(.text))  {
     *(.mbheader)
-  }
-  .text : {
     *(.text)
   }
-  .rodata ALIGN (0x1000) : {
+  .rodata ALIGN (4K) : {
     start_ctors = .;
     *(.ctors)
     end_ctors = .;
     *(.rodata)
   }
-  .data ALIGN (0x1000) : {
+  .data ALIGN (4K) : {
     *(.data)
     edata = .;
   }
-  .bss : {
+  .bss ALIGN (4K) : {
     sbss = .;
     *(COMMON)
     *(.bss)
