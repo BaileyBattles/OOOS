@@ -3,7 +3,7 @@
 #include "Util/String.h"
 #include "Util/Memcpy.h"
 
-char* VIDEO_ADDRESS = (char*)0xB8000;
+u32 VIDEO_ADDRESS = 0xB8000;
 /* Declaration of private functions */
 int get_cursor_offset();
 void set_cursor_offset(int offset);
@@ -78,7 +78,7 @@ int print_char(char c, int col, int row, char attr) {
         row = get_offset_row(offset);
         offset = get_offset(0, row+1);
     } else {
-        vidmem = (unsigned char*) 0xB8000;
+        vidmem = (unsigned char*) VIDEO_ADDRESS;
         vidmem[offset] = c;
         vidmem[offset+1] = attr;
         offset += 2;
@@ -89,11 +89,11 @@ int print_char(char c, int col, int row, char attr) {
         int i;
         for (i = 1; i < MAX_ROWS; i++) 
             memory_copy((const char *)(get_offset(0, i) + VIDEO_ADDRESS),
-                        get_offset(0, i-1) + VIDEO_ADDRESS,
+                        get_offset(0, i-1) + (char*)VIDEO_ADDRESS,
                         MAX_COLS * 2);
 
         /* Blank last line */
-        char *last_line = get_offset(0, MAX_ROWS-1) + VIDEO_ADDRESS;
+        char *last_line = get_offset(0, MAX_ROWS-1) + (char*)VIDEO_ADDRESS;
         for (i = 0; i < MAX_COLS * 2; i++) last_line[i] = 0;
 
         offset -= 2 * MAX_COLS;
@@ -127,7 +127,7 @@ void set_cursor_offset(int offset) {
 void clear_screen() {
     int screen_size = MAX_COLS * MAX_ROWS;
     int i;
-    char *screen = VIDEO_ADDRESS;
+    char *screen = (char*)VIDEO_ADDRESS;
 
     for (i = 0; i < screen_size; i++) {
         screen[i*2] = ' ';

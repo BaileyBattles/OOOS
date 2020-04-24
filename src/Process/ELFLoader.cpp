@@ -13,6 +13,7 @@ ELFInfo ELFLoader::load(const char path[]) {
     Elf32_Phdr phdr;
     for (int i = 0; i < header.e_phnum; i++) {
         memory_copy((const void*)buffer + header.e_phoff + i*sizeof(phdr), (void*)&phdr, sizeof(phdr));
+        memory_copy((const void *)phdr.p_offset + (u32)buffer, (void*)phdr.p_vaddr, phdr.p_filesz);
     }
 
     Elf32_Shdr shdr;
