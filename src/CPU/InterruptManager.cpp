@@ -116,7 +116,7 @@ void handleISR(registers_t r){
     if(isrHandlers[r.int_no] != 0)
         isrHandlers[r.int_no]->handleInterrupt(r);
     else {
-        kprint("received interrupt: ");
+        kprint("Received ISR: ");
         char s[3];
         int_to_ascii(r.int_no, s);
         kprint(s);
@@ -127,6 +127,13 @@ void handleISR(registers_t r){
 void handleIRQ(registers_t r){
     if(irqHandlers[r.int_no] != 0)
         irqHandlers[r.int_no]->handleInterrupt(r);
+    else if(r.int_no != 46  ) {
+        kprint("Received IRQ: ");
+        char s[3];
+        int_to_ascii(r.int_no, s);
+        kprint(s);
+        kprint("\n");
+    }
 }
 
 // Interrupts should be registered to the value

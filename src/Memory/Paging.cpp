@@ -51,6 +51,14 @@ void setPTENotPresent(PageTableEntry &entry) {
     entry = entry & ~0x1;
 }
 
+void setPTEUserMode(PageTableEntry &entry){
+    entry = entry | 0x4;
+}
+
+void setPTEWriteable(PageTableEntry &entry) {
+    entry = entry | 0x2;
+}
+
 int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress){
     entry = entry & ~0x7ffff000;
     entry = entry | pteBaseAddress;
@@ -87,6 +95,10 @@ void setPDEWriteable(PageDirectoryEntry &entry){
     entry = entry | 0x2;
 }
 
+void setPDEUserMode(PageDirectoryEntry &entry){
+    entry = entry | 0x4;
+}
+
 int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress){
     entry = entry & ~0x7ffff000;
     entry = entry | pdeBaseAddress;
@@ -106,10 +118,13 @@ u32 PageTableManager::setContinuousPageTable(PageTable &pageTable, u32 baseAddre
     return currentAddress;
 }
 
-void PageTableManager::mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress) {
+void PageTableManager::mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user ) {
     PageTableEntry *pte = getPageTableEntry(structure, virtualAddress);
     setPTEBaseAddress(*pte, physicalAddress);
     setPTEPresent(*pte);
+    setPTEWriteable(*pte);
+    if (user)
+        setPTEUserMode(*pte);
 }
 
 void causeExamplePageFault() {
@@ -128,6 +143,7 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         setPDEPresent(structure.pageDirectoryPtr->entry[i]);
         setPDEWriteable(structure.pageDirectoryPtr->entry[i]);
+        setPDEUserMode(structure.pageDirectoryPtr->entry[i]);
         setPDEBaseAddress(structure.pageDirectoryPtr->entry[i], 
                                 (u32)structure.pageTablePtrs[i]);
     }
@@ -135,8 +151,8 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
 
     for (int i = 0; i < numPhysicalPages / 2; i++) {
         u32 offset = i*4096;
-        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset);
-        mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2));
+        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, true);
+        mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
     }
     return structure;
 }

@@ -22,6 +22,9 @@ public:
 	static Process createInitProcess(void (*func)(Process *));
 	Process createChildProcess(const char path[], int level);
 
+	static void enterUserMode();
+
+
     void exec();
 
     PagingStructure *getPagingStructure();
@@ -35,6 +38,7 @@ private:
     int loadElf(const char path[]);
 	void storeRegisters(PCB &processControlBlock);
 	void storeInitRegisters(PCB &processControlBlock);
+
 
 };
 

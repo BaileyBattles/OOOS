@@ -50,6 +50,8 @@ u32 pteBaseAddress(PageTableEntry entry);
 //Setters
 void setPTEPresent(PageTableEntry &entry);
 void setPTENotPresent(PageTableEntry &entry);
+void setPTEUserMode(PageTableEntry &entry);
+void setPTEWriteable(PageTableEntry &entry);
 //returns 0 on success, -1 on failure
 int setPTEBaseAddress(PageTableEntry &entry, u32 pteBaseAddress);
 
@@ -64,6 +66,7 @@ u32 pdeBaseAddress(PageDirectoryEntry entry);
 //returns 0 on success, -1 on failure
 void setPDEPresent(PageDirectoryEntry &entry);
 void setPDEWriteable(PageDirectoryEntry &entry);
+void setPDEUserMode(PageDirectoryEntry &entry);
 int setPDEBaseAddress(PageDirectoryEntry &entry, u32 pdeBaseAddress);
 
 
@@ -80,7 +83,7 @@ public:
         return instance;
     }
     PagingStructure initializeProcessPageTable();
-    void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress);
+    void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
    
     //this switches the Addressing to the process's paging strucutre
     void pageTableSwitch(Process* process);

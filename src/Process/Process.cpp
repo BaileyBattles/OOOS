@@ -1,9 +1,10 @@
+#include "CPU/Gdt.h"
 #include "FS/VFS.h"
 #include "Memory/KMemoryManager.h"
 #include "Process/Process.h"
 #include "Util/String.h"
 
-extern "C" void enterUserMode();
+extern "C" void jump_usermode();
 
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
@@ -42,6 +43,13 @@ void Process::exec() {
 void Process::storeRegisters(PCB &processControlBlock) {
     asm("\t movl %%esp,%0" : "=r"(processControlBlock.esp));
     //asm("\t movl %%ebp,%0" : "=r"(processControlBlock.ebp));
+}
+
+void Process::enterUserMode() {
+    u32 val;
+    __asm__("movl %%esp,%0" : "=r"(val));
+    setTSSStack(val);
+    jump_usermode();
 }
 
 

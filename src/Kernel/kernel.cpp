@@ -22,17 +22,12 @@ extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
 
 extern "C" unsigned long ebss;
+extern "C" void jump_usermode();
 
 void stage2(Process *initProcess);
 
-// Kernel Helper Functions
-void kernelLoop() {
-    while (true)
-    {}
-}
-
 void testInterrupts() {
-    //__asm__ __volatile__("int $2");
+    //__asm__ __volatile__("int $13");
     //__asm__ __volatile__("int $3");
 }
 
@@ -58,10 +53,21 @@ void testKMM() {
     }
 }
 
+void causeGPF() {
+    kprint("HERE");
+}
+
+// Kernel Helper Functions
+extern "C"
+void kernelLoop() {
+    causeGPF();
+    while (true)
+    {}
+}
 
 ////////////////
 // kernelMain //
-////////////////
+//////////////// 
 
 
 
@@ -73,11 +79,6 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     initializeKMM();
     testKMM();
 
-
-    u32 val;
-    __asm__("movl %%es,%0" : "=r"(val));
-
-
     InterruptManager interruptManager;
 
     Keyboard keyboard;
@@ -86,7 +87,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     PTM.initialize();
     
-    gdt_init();
+    gdt_init(); //this crashes things if you move it around...
 
     IDE ide0(IDE0_PORT);
     ide0.initialize();
@@ -107,6 +108,8 @@ void stage2(Process *initProcess) {
     Process childProcess = initProcess->createChildProcess("/BIN/FILE", 0);
     childProcess.exec();
     kprint("here");
+    u32 val;
+    Process::enterUserMode();
     kernelLoop();
 }
 
