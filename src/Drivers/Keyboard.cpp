@@ -7,6 +7,7 @@
 Keyboard::Keyboard()
 {
     shiftDown = false;
+    terminal = nullptr;
 }
 
 void Keyboard::initialize()
@@ -18,6 +19,11 @@ char Keyboard::accountForShift(char input) {
     if (shiftDown)
         return input - 32;
     return input;
+}
+
+void Keyboard::registerTerminal(Process *process) {
+    terminal = process;
+    socket.connectTo(process);
 }
 
 char Keyboard::translateInput(u8 input) {
@@ -110,8 +116,13 @@ void Keyboard::handleInterrupt(registers_t r)
 {
     u8 c = inb(0x60);
     char c1 = translateInput(c);
-    char buff[2];
-    buff[0] = c1;
-    buff[1] = '\0';
-    kprint(buff);
+    if (terminal = nullptr) {
+        char buff[2];
+        buff[0] = c1;
+        buff[1] = '\0';
+        kprint(buff);
+    }
+    else {
+        socket.write(&c1, 1);
+    }
 }

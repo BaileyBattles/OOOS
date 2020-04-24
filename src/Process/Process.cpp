@@ -1,4 +1,5 @@
 #include "CPU/Gdt.h"
+#include "Drivers/Keyboard.h"
 #include "FS/VFS.h"
 #include "Memory/KMemoryManager.h"
 #include "Process/Process.h"
@@ -22,6 +23,24 @@ Process Process::createChildProcess(const char thePath[], int level, bool user) 
     return childProcess;
 }
 
+void Process::connectToKeyboard(Keyboard *keyboard) {
+    if (keyboard != nullptr)
+        keyboard->registerTerminal(this);
+}
+
+void Process::readFromIPC() {
+    while (true) {
+        char c1;
+        int status = socket.read(&c1, 1);
+        if (status == 0) {
+            char buff[2];
+            buff[0] = c1;
+            buff[1] = '\0';
+            kprint(buff);
+        }
+    }
+}
+
 
 PagingStructure* Process::getPagingStructure() {
     return &pagingStructure;
@@ -32,6 +51,7 @@ void Process::exec() {
     storeRegisters(oldPcb);
     ELFInfo elfInfo = elfLoader.load(path);
     PageTableManager::the().pageTableSwitch(this);
+    currentProcess = this;
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
                 : "memory");

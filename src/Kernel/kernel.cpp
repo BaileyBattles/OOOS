@@ -26,6 +26,9 @@ extern "C" void jump_usermode();
 
 void stage2(Process *initProcess);
 
+Keyboard keyboard;
+
+
 void testInterrupts() {
     //__asm__ __volatile__("int $13");
     //__asm__ __volatile__("int $3");
@@ -75,13 +78,13 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     clear_screen();
 
     callConstructors();
-    
+    currentProcess = nullptr;
+
     initializeKMM();
     testKMM();
 
     InterruptManager interruptManager;
 
-    Keyboard keyboard;
     keyboard.initialize();
 
 
@@ -105,7 +108,9 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 }
 
 void stage2(Process *initProcess) {
-    Process childProcess = initProcess->createChildProcess("/BIN/FILE", 0, false);
+    Process childProcess = initProcess->createChildProcess("/BIN/SH", 0, false);
+    childProcess.connectToKeyboard(&keyboard); 
+    childProcess.readFromIPC();
     childProcess.exec();
     kprint("here");
     u32 val;
