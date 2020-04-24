@@ -3,7 +3,7 @@
 
 #include "Kernel/Types.h"
 
-void memory_copy(const char *source, char *dest, int nbytes);
+void memory_copy(const void *source, void *dest, int nbytes);
 void memory_set(void *dest, u8 val, u32 len);
 //if buff1 == buff2 up to nbytes returns 0
 //if buff1 < buff2 it returns -1

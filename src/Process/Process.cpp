@@ -16,7 +16,7 @@ Process Process::createChildProcess(const char thePath[], int level, bool user) 
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
     childProcess.path = (char *)KMM.kmalloc(strlen(thePath) + 1);
-    memory_copy(thePath, childProcess.path, strlen(thePath) + 1);
+    memory_copy((const void*)thePath, (void*)childProcess.path, strlen(thePath) + 1);
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     childProcess.isUserMode = user;
     return childProcess;

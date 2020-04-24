@@ -1,10 +1,21 @@
+#include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
 #include "Util/String.h"
 
-void memory_copy(const char *source, char *dest, int nbytes) {
+void memory_copy(const void *source, void *dest, int nbytes) {
     int i;
+    if ((u32)dest - (u32)source < nbytes) {
+        u8 *temp = (u8*)KMM.kmalloc(nbytes);
+        for (int i = 0; i < nbytes; i++) {
+            *((u8*)temp + i) = *((u8*)source + i);
+        }
+        for (int i = 0; i < nbytes; i++) {
+            *((u8*)dest + i) = *((u8*)temp + i);
+        }
+        return;
+    }
     for (i = 0; i < nbytes; i++) {
-        *(dest + i) = *(source + i);
+        *((u8*)dest + i) = *((u8*)source + i);
     }
 }
 
