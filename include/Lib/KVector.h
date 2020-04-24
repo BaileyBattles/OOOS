@@ -6,8 +6,8 @@
 #include "Memory/KMemoryManager.h"
 #include "Util/Memcpy.h"
 
-#define STARTING_VECTOR_SIZE 10
-#define EXTRA_SPACE_ON_SET_CAPACITY 10
+#define STARTING_VECTOR_SIZE 40
+#define EXTRA_SPACE_ON_SET_CAPACITY 40
 
 template <class T> 
 class KVector {
@@ -90,6 +90,7 @@ int KVector<T>::setCapcity(int desiredCapacity) {
     buffer = (T*)KMM.kmalloc(desiredCapacity);
     memory_copy((char*)oldBuffer, (char*)buffer, sizeof(T) * numItems);
     KMM.kfree(oldBuffer);
+    capacity = desiredCapacity;
 }
 
 template <class T>

@@ -105,7 +105,7 @@ def main():
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
     write_fat(DISK_NAME)
     filenames = []
-    filenames.append((os.path.join(os.getcwd(), 'src/Userland/hello_world.o'), 'FILE'))
+    #filenames.append((os.path.join(os.getcwd(), 'src/Userland/hello_world.o'), 'FILE'))
     filenames.append((os.path.join(os.getcwd(), 'src/Userland/sh.o'), 'SH'))
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
