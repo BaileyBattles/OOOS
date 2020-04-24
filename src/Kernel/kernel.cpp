@@ -73,17 +73,20 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     initializeKMM();
     testKMM();
 
-    gdt_init();
 
     u32 val;
     __asm__("movl %%es,%0" : "=r"(val));
 
 
     InterruptManager interruptManager;
+
     Keyboard keyboard;
     keyboard.initialize();
 
+
     PTM.initialize();
+    
+    gdt_init();
 
     IDE ide0(IDE0_PORT);
     ide0.initialize();
@@ -92,6 +95,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     FileSystem *fileSystem = (FileSystem*)&f16;
 
     VFS.mount(*fileSystem, 'A');
+
 
     Process init = Process::createInitProcess(stage2);
     while (true) {

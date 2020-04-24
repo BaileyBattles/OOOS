@@ -3,7 +3,7 @@
 #include "Process/Process.h"
 #include "Util/String.h"
 
-extern "C" u32 get_eip();
+extern "C" void enterUserMode();
 
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
@@ -31,7 +31,7 @@ void Process::exec() {
     storeRegisters(oldPcb);
     ELFInfo elfInfo = elfLoader.load(path);
     PageTableManager::the().pageTableSwitch(this);
-    pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
+    pcb.esp = USERSPACE_START_VIRTUAL + 0x10000;
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
                 : "memory");
     ((void (*)(void))elfInfo.entryAddress)();
@@ -42,7 +42,6 @@ void Process::exec() {
 void Process::storeRegisters(PCB &processControlBlock) {
     asm("\t movl %%esp,%0" : "=r"(processControlBlock.esp));
     //asm("\t movl %%ebp,%0" : "=r"(processControlBlock.ebp));
-    processControlBlock.eip = get_eip();
 }
 
 

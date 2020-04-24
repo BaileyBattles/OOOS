@@ -11,6 +11,8 @@ typedef s32		Elf32_Sword;
 typedef u32	    Elf32_Word;
 typedef u64	    Elf32_Lword;
 
+#define SHT_PROGBITS 1
+
 typedef struct {
 	unsigned char	e_ident[EI_NIDENT];	/* File identification. */
 	Elf32_Half	    e_type;		/* File type. */
@@ -27,6 +29,31 @@ typedef struct {
 	Elf32_Half	    e_shnum;	/* Number of section header entries. */
 	Elf32_Half	    e_shstrndx;	/* Section name strings section. */
 } Elf32_Ehdr;
+
+typedef struct elf32_phdr{
+	Elf32_Word	p_type;
+	Elf32_Off		p_offset;
+	Elf32_Addr	p_vaddr;
+	Elf32_Addr	p_paddr;
+  	Elf32_Word	p_filesz;
+  	Elf32_Word	p_memsz;
+  	Elf32_Word	p_flags;
+  	Elf32_Word	p_align;
+} Elf32_Phdr;
+
+typedef struct elf32_shdr {
+  	Elf32_Word	sh_name;
+  	Elf32_Word	sh_type;
+  	Elf32_Word	sh_flags;
+  	Elf32_Addr	sh_addr;
+  	Elf32_Off	sh_offset;
+  	Elf32_Word	sh_size;
+  	Elf32_Word	sh_link;
+  	Elf32_Word	sh_info;
+  	Elf32_Word	sh_addralign;
+  	Elf32_Word	sh_entsize;
+} Elf32_Shdr;
+
 
 
 struct ELFInfo {

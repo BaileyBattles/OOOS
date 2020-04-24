@@ -115,6 +115,13 @@ void InterruptManager::setupIrqGates(){
 void handleISR(registers_t r){
     if(isrHandlers[r.int_no] != 0)
         isrHandlers[r.int_no]->handleInterrupt(r);
+    else {
+        kprint("received interrupt: ");
+        char s[3];
+        int_to_ascii(r.int_no, s);
+        kprint(s);
+        kprint("\n");
+    }
 }
 
 void handleIRQ(registers_t r){
@@ -144,11 +151,6 @@ void registerIRQHandler(InterruptHandlingObject *handler, int num){
 */
 
 extern "C" void isr_handler(registers_t r) {
-    // kprint("received interrupt: ");
-    // char s[3];
-    // int_to_ascii(r.int_no, s);
-    // kprint(s);
-    // kprint("\n");
     handleISR(r);
 }
 

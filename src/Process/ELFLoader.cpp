@@ -9,5 +9,9 @@ ELFInfo ELFLoader::load(const char path[]) {
     Elf32_Ehdr header;
     memory_copy(buffer, (char *)&header, sizeof(Elf32_Ehdr));
     info.entryAddress = header.e_entry;
+
+    Elf32_Shdr shdr;
+    for (int i = 0; i < header.e_shnum; i++)
+        memory_copy(buffer + header.e_shoff + i*sizeof(shdr), (char*)&shdr, sizeof(shdr));
     return info;
 }

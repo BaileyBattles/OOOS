@@ -14,6 +14,7 @@ BINUTILS = $(wildcard src/Binutils/*.cpp)
 
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.cpp=.o    \
+		src/CPU/GdtAsm.o      \
         src/CPU/Interrupt.o  \
 		src/Process/ProcessAsm.o} 
 
