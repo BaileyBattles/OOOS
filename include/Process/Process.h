@@ -20,9 +20,8 @@ struct PCB {
 class Process {
 public:
 	static Process createInitProcess(void (*func)(Process *));
-	Process createChildProcess(const char path[], int level);
+	Process createChildProcess(const char path[], int level, bool user);
 
-	static void enterUserMode();
 
 
     void exec();
@@ -33,7 +32,9 @@ private:
 	ELFLoader elfLoader;
 	PCB pcb;
 	Process *parent;
+	bool isUserMode;
     
+	static void enterUserMode(u32 entryAddress);
     PagingStructure pagingStructure;
     int loadElf(const char path[]);
 	void storeRegisters(PCB &processControlBlock);

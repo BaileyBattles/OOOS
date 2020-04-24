@@ -4,7 +4,7 @@
 #include "Process/Process.h"
 #include "Util/String.h"
 
-extern "C" void jump_usermode();
+extern "C" void enteruser(u32 entryPoint);
 
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
@@ -12,13 +12,13 @@ Process Process::createInitProcess(void (*func)(Process *)) {
     func(initProcess);
 }
 
-Process Process::createChildProcess(const char thePath[], int level) {
+Process Process::createChildProcess(const char thePath[], int level, bool user) {
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
     childProcess.path = (char *)KMM.kmalloc(strlen(thePath) + 1);
     memory_copy(thePath, childProcess.path, strlen(thePath) + 1);
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
-
+    childProcess.isUserMode = user;
     return childProcess;
 }
 
@@ -35,7 +35,12 @@ void Process::exec() {
     pcb.esp = USERSPACE_START_VIRTUAL + 0x10000;
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
                 : "memory");
-    ((void (*)(void))elfInfo.entryAddress)();
+    if (isUserMode) {
+        enterUserMode(elfInfo.entryAddress);
+    }
+    else {
+        ((void (*)(void))elfInfo.entryAddress)();
+    }
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
 }
@@ -45,26 +50,9 @@ void Process::storeRegisters(PCB &processControlBlock) {
     //asm("\t movl %%ebp,%0" : "=r"(processControlBlock.ebp));
 }
 
-void Process::enterUserMode() {
+void Process::enterUserMode(u32 entryAddress) {
     u32 val;
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
-    jump_usermode();
+    enteruser(entryAddress);
 }
-
-
-// void oldExec() {
-//     char *buff = (char*)0x1000000;
-//     ELFInfo elfInfo = elfLoader.load(path, buff);
-
-//     PageTableManager::the().pageTableSwitch(this);
-//     u32 stackPointer;
-//     u32 basePointer;
-//     asm("\t movl %%esp,%0" : "=r"(stackPointer));
-//     asm("\t movl %%ebp,%0" : "=r"(stackPointer));
-
-//     switchRegisters(pcb);
-//     ((void (*)(void))elfInfo.entryAddress)();
-//     asm volatile("movl %%eax, %%esp" ::"a"(stackPointer)
-//                  : "memory");
-// }

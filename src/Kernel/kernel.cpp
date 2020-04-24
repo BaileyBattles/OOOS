@@ -105,11 +105,10 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 }
 
 void stage2(Process *initProcess) {
-    Process childProcess = initProcess->createChildProcess("/BIN/FILE", 0);
+    Process childProcess = initProcess->createChildProcess("/BIN/FILE", 0, false);
     childProcess.exec();
     kprint("here");
     u32 val;
-    Process::enterUserMode();
     kernelLoop();
 }
 
