@@ -101,8 +101,6 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     VFS.mount(*fileSystem, 'A');
 
-    SyscallHandler sysHandler;
-    sysHandler.initialize();
     Process init = Process::createInitProcess(stage2);
     while (true) {
         kprint("Init Process didn't get started");

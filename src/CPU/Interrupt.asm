@@ -334,10 +334,11 @@ isr80:
     pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
     push ecx
     push ebx
-
+    push edx
 	
     ; 2. Call C handler
 	call handle_syscall
+    pop edx
 	pop ebx
     pop ecx
     mov ebx, eax

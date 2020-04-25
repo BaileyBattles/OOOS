@@ -4,18 +4,29 @@
 #include "CPU/InterruptHandlingObject.h"
 #include "Drivers/Screen.h"
 
-class SyscallHandler : public InterruptHandlingObject {
-public:
-    virtual void initialize();
-    virtual void handleInterrupt(registers_t r);
-private:
+#define NUM_SYSCALLS 10
+
+//Sycalls
+void printf(char *buffer);
+void getInput(char *buffer);
+
+void theRealGetInput(char *buffer);
+
+//Syscall Wrappers
+void _kprint(char* buffer, char* result);
+void _getInput(char* buffer, char* result);
+
+typedef void (*syscall_t)(char *, char*);
+static syscall_t _syscall_table[] {
+    _kprint,
+    _getInput
 };
 
-typedef void (*syscall_t)(const char *);
+
 ///////////////////
 // SysCall Table //
 ///////////////////
 
-void call_syscall(void *args,  void *results);
+void call_syscall(int num, void *args,  void *results);
 
 #endif
