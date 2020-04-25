@@ -9,6 +9,7 @@
 #include "FS/FileSystem.h"
 #include "FS/VFS.h"
 #include "Kernel/Multiboot.h"
+#include "Kernel/Syscall.h"
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
 #include "Process/Process.h"
@@ -100,7 +101,8 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 
     VFS.mount(*fileSystem, 'A');
 
-
+    SyscallHandler sysHandler;
+    sysHandler.initialize();
     Process init = Process::createInitProcess(stage2);
     while (true) {
         kprint("Init Process didn't get started");
@@ -111,6 +113,7 @@ void stage2(Process *initProcess) {
     Process childProcess = initProcess->createChildProcess("/BIN/SH", 0, false);
     //childProcess.connectToKeyboard(&keyboard); 
     //childProcess.readFromIPC();
+    currentProcess = &childProcess;
     childProcess.exec();
     kprint("here");
     u32 val;

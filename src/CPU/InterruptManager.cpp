@@ -55,6 +55,7 @@ void InterruptManager::setupIdtGates() {
     set_idt_gate(29, (u32)isr29);
     set_idt_gate(30, (u32)isr30);
     set_idt_gate(31, (u32)isr31);
+    set_idt_gate(80, (u32)isr80);
 }
 
 void InterruptManager::remapPIC(u8 offset1, u8 offset2){
@@ -156,6 +157,7 @@ void registerIRQHandler(InterruptHandlingObject *handler, int num){
 /*
     These are called from the int stubs in assembly
 */
+
 
 extern "C" void isr_handler(registers_t r) {
     handleISR(r);

@@ -1,7 +1,6 @@
-#include "Drivers/Screen.h"
-#include "Process/Process.h"
+#include "Kernel/Syscall.h"
 
 int main() {
-    kprint("> ");
-    //currentProcess->readFromIPC();
+    char data[] = "From the shell!\n";
+    call_syscall((void*)data);
 }

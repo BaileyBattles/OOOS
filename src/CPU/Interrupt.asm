@@ -1,6 +1,7 @@
 ; Defined in isr.c
 [extern isr_handler]
 [extern irq_handler]
+[extern handle_syscall]
 
 ; Common ISR code
 isr_common_stub:
@@ -90,6 +91,7 @@ global isr28
 global isr29
 global isr30
 global isr31
+global isr80
 ; IRQs
 global irq0
 global irq1
@@ -325,6 +327,34 @@ isr31:
     push byte 0
     push byte 31
     jmp isr_common_stub
+
+; 31: syscall
+isr80:
+    cli
+    pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    mov ax, ds ; Lower 16-bits of eax = ds.
+	push eax ; save the data segment descriptor
+	mov ax, 0x10  ; kernel data segment descriptor
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+    push ebx
+
+	
+    ; 2. Call C handler
+	call handle_syscall
+	
+    ; 3. Restore state
+    pop ebx
+	pop eax 
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	popa
+	sti
+	iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; IRQ handlers
 irq0:

@@ -10,6 +10,7 @@ OBJ = 		$(wildcard ../Drivers/*.o      \
 				../Lib/*.o          \
 				../Lib/stdlib/*.o   \
 				../Process/*.o      \
+				../Kernel/Syscall.o \
 				)
 
 default:
