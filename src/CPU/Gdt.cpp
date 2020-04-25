@@ -58,5 +58,5 @@ void gdt_init(){
 
 
     loadGdt();
-	//tss_flush();
+	tss_flush();
 }
