@@ -107,7 +107,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 }
 
 void stage2(Process *initProcess) {
-    Process childProcess = initProcess->createChildProcess("/BIN/SH", 0, false);
+    Process childProcess = initProcess->createChildProcess("/BIN/SH", 0, true);
     childProcess.connectToKeyboard(&keyboard); 
     //childProcess.readFromIPC();
     Process::currentProcess = &childProcess;

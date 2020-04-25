@@ -58,8 +58,7 @@ void Process::exec() {
     PageTableManager::the().pageTableSwitch(this);
     currentProcess = this;
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
-    asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
-                : "memory");
+    
     if (isUserMode) {
         enterUserMode(elfInfo.entryAddress);
     }
@@ -79,5 +78,7 @@ void Process::enterUserMode(u32 entryAddress) {
     u32 val;
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
+    asm volatile("movl %%eax, %%esp" ::"a"(USERSPACE_START_VIRTUAL + 0x1000)
+                : "memory");
     enteruser(entryAddress);
 }

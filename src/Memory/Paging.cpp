@@ -151,7 +151,7 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
 
     for (int i = 0; i < numPhysicalPages / 2; i++) {
         u32 offset = i*4096;
-        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, true);
+        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, false);
         mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
     }
     return structure;

@@ -364,7 +364,7 @@ void FAT16::format(bool eraseData) {
     }
     
     writeBPB();
-    writeFAT();
+    //writeFAT();
     createRootDir();
     findFreeClusters();
 }

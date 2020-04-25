@@ -332,6 +332,18 @@ isr31:
 isr80:
     cli
     pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+
+    push ds
+    push es
+    push fs
+    push gs
+    ;pushl ss 
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
     push ecx
     push ebx
     push edx
@@ -341,6 +353,13 @@ isr80:
     pop edx
 	pop ebx
     pop ecx
+
+    pop gs 
+    pop fs 
+    pop es 
+    pop ds
+
+
     mov ebx, eax
 	popa
     mov eax, ebx

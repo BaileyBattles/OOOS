@@ -1,13 +1,15 @@
 #include "Kernel/Syscall.h"
 
 int main() {
-    char data[] = "From the shell!\n";
+    const char data[] = "From the shell!\n";
     char results[] = " ";
-    printf(data);
+    printf((char*)data);
     results[0] = '\0';
+    printf("> ");
     while (true) {
         getInput(results);
         printf(results);
+        if (results[0] == '\n')
+            printf("> ");
     }
-    //printf(results);
 }
