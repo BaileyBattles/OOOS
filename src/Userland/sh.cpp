@@ -1,4 +1,4 @@
-#include "Kernel/Syscall.h"
+#include "Kernel/SyscallStubs.h"
 
 int main() {
     const char data[] = "From the shell!\n";

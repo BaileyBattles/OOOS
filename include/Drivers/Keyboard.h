@@ -9,8 +9,8 @@
 class Keyboard : public Device {
 public:
     Keyboard();
-    void initialize();
-    void handleInterrupt(registers_t r);
+    virtual void initialize();
+    virtual void handleInterrupt(registers_t r);
     void registerTerminal(Process *process);
 private:
     char translateInput(u8 input);
