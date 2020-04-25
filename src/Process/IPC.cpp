@@ -39,8 +39,11 @@ int IPCSocket::getBytes(char *buffer, int nbytes) {
             buffer[i] = byte;
             i++;
         }
+        else {
+            return i;
+        }
     }
-    return 0;
+    return i;
 }
 
 bool IPCSocket::bufferFull() {

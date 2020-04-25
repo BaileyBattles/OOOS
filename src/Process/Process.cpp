@@ -5,6 +5,7 @@
 #include "Process/Process.h"
 #include "Util/String.h"
 
+Process* Process::currentProcess;
 extern "C" void enteruser(u32 entryPoint);
 
 Process Process::createInitProcess(void (*func)(Process *)) {
@@ -26,6 +27,10 @@ Process Process::createChildProcess(const char thePath[], int level, bool user) 
 void Process::connectToKeyboard(Keyboard *keyboard) {
     if (keyboard != nullptr)
         keyboard->registerTerminal(this);
+}
+
+IPCSocket *Process::theSocket() {
+    return &socket;
 }
 
 void Process::readFromIPC() {

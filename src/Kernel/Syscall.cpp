@@ -1,6 +1,6 @@
 #include "CPU/InterruptManager.h"
+#include "Process/Process.h"
 #include "Util/String.h"
-
 #include "Kernel/Syscall.h"
 
 void call_syscall(int num, void *args,  void *results) {
@@ -40,5 +40,6 @@ void _kprint(char* buffer, char* result){
 }
 
 void _getInput(char* buffer, char* result) {
-    theRealGetInput(result);
+    result[0] = '\0';
+    Process::currentProcess->theSocket()->read(result, 1);
 }

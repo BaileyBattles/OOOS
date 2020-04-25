@@ -2,8 +2,12 @@
 
 int main() {
     char data[] = "From the shell!\n";
-    char results[] = "From the shell!\n";
+    char results[] = " ";
     printf(data);
-    getInput(results);
-    printf(results);
+    results[0] = '\0';
+    while (true) {
+        getInput(results);
+        printf(results);
+    }
+    //printf(results);
 }

@@ -12,7 +12,6 @@
 #define KERNEL_LEVEL 0
 #define USER_LEVEL   3
 
-static Process *currentProcess;
 
 struct PCB {
 	u32 eip;
@@ -24,6 +23,8 @@ class Keyboard;
 
 class Process {
 public:
+	static Process *currentProcess;
+
 	friend class IPCSocket;
 
 	static Process createInitProcess(void (*func)(Process *));
@@ -33,6 +34,7 @@ public:
     PagingStructure *getPagingStructure();
 	void connectToKeyboard(Keyboard *keyboard);
 	void readFromIPC();
+	IPCSocket *theSocket();
 
 
 private:
