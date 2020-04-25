@@ -359,10 +359,17 @@ isr80:
     pop es 
     pop ds
 
+    ;This is basically a popa except we don't pop into eax
+    ;to get the return value of handle_syscall
+	pop edi
+    pop esi
+    pop ebp
+    pop ebx
+    add esp, 4
+    pop edx 
+    pop ecx 
+    add esp, 4
 
-    mov ebx, eax
-	popa
-    mov eax, ebx
 	sti
 	iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 

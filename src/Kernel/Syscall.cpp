@@ -3,7 +3,7 @@
 #include "Util/String.h"
 #include "Kernel/Syscall.h"
 
-void call_syscall(int num, void *args,  void *results) {
+int call_syscall(int num, void *args,  void *results) {
     __asm__ __volatile__("movl %%eax, %%ebx" ::"a"((u32)args)
                 : "memory");
     __asm__ __volatile__("movl %%eax, %%ecx" ::"a"((u32)results)
@@ -14,32 +14,26 @@ void call_syscall(int num, void *args,  void *results) {
 }
 
 extern "C"
-void handle_syscall(int num, void *args, void *results) {
-    _syscall_table[num]((char*)args, (char*)results);
+int handle_syscall(int num, void *args, void *results) {
+    return _syscall_table[num]((char*)args, (char*)results);
 }
 
-void printf(char *buffer) {
-    call_syscall(0, (void*)buffer, nullptr);
+int printf(char *buffer) {
+    return call_syscall(0, (void*)buffer, nullptr);
 }
 
-void getInput(char *buffer) {
-    call_syscall(1, nullptr, (void*)buffer);
-}
-
-void theRealGetInput(char *buffer) {
-    buffer[0] = 'a';
-    buffer[1] = 'b';    
-    buffer[2] = 'c';
-    buffer[3] = '\n';
-    buffer[4] = '\0';
+int getInput(char *buffer) {
+    return call_syscall(1, nullptr, (void*)buffer);
 }
 
 //Syscall Wrappers
-void _kprint(char* buffer, char* result){
+int _kprint(char* buffer, char* result){
     kprint(buffer);
+    return 100;
 }
 
-void _getInput(char* buffer, char* result) {
+int _getInput(char* buffer, char* result) {
     result[0] = '\0';
     Process::currentProcess->theSocket()->read(result, 1);
+    return 0;
 }

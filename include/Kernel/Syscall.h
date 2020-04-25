@@ -7,16 +7,16 @@
 #define NUM_SYSCALLS 10
 
 //Sycalls
-void printf(char *buffer);
-void getInput(char *buffer);
+int printf(char *buffer);
+int getInput(char *buffer);
 
 void theRealGetInput(char *buffer);
 
 //Syscall Wrappers
-void _kprint(char* buffer, char* result);
-void _getInput(char* buffer, char* result);
+int _kprint(char* buffer, char* result);
+int _getInput(char* buffer, char* result);
 
-typedef void (*syscall_t)(char *, char*);
+typedef int (*syscall_t)(char *, char*);
 static syscall_t _syscall_table[] {
     _kprint,
     _getInput
@@ -27,6 +27,6 @@ static syscall_t _syscall_table[] {
 // SysCall Table //
 ///////////////////
 
-void call_syscall(int num, void *args,  void *results);
+int call_syscall(int num, void *args,  void *results);
 
 #endif

@@ -5,7 +5,10 @@ int main() {
     char results[] = " ";
     printf((char*)data);
     results[0] = '\0';
-    printf("> ");
+    int x = printf("> ");
+    if (x == 100) {
+        printf("Did it\n");
+    }
     while (true) {
         getInput(results);
         printf(results);
