@@ -16,6 +16,6 @@ typedef void (*syscall_t)(const char *);
 // SysCall Table //
 ///////////////////
 
-void call_syscall(void *args);
+void call_syscall(void *args,  void *results);
 
 #endif

@@ -332,27 +332,17 @@ isr31:
 isr80:
     cli
     pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    mov ax, ds ; Lower 16-bits of eax = ds.
-	push eax ; save the data segment descriptor
-	mov ax, 0x10  ; kernel data segment descriptor
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
+    push ecx
     push ebx
 
 	
     ; 2. Call C handler
 	call handle_syscall
-	
-    ; 3. Restore state
-    pop ebx
-	pop eax 
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
+	pop ebx
+    pop ecx
+    mov ebx, eax
 	popa
+    mov eax, ebx
 	sti
 	iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
