@@ -15,10 +15,15 @@ void KMemoryManager::initialize(u32 address){
     memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
     kmallocBitmapLength = KERNEL_HEAP_SIZE / 8;
 
-    pagemallocStartAddress = kmallocStartAddress + KERNEL_HEAP_SIZE;
-    pagemallocStartAddress = calculateNextAllignedAddress((u32)pagemallocStartAddress, PAGE_SIZE);
+    pagemallocStartAddress = 0;
     memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
+
+    //set the pages used by the kernel as used
+    int numKernelPages = (address + KERNEL_HEAP_SIZE) / (PAGE_SIZE) + 1;
     pagemallocBitmapLength = NUM_PAGES / 8;
+        for (int i = 0; i < numKernelPages; i++) {
+        setIndexUsed(i, pagemallocMap);
+    }
 }
 
 void *KMemoryManager::kmalloc(int numBytes){
@@ -34,7 +39,7 @@ void KMemoryManager::kfree(void* buffer)
 {
 }
 
-void *KMemoryManager::pagemalloc(){
+void *KMemoryManager::pagemallocPhysical(){
     u32 startIndex = findNFree(1, pagemallocMap, pagemallocBitmapLength);
     if (startIndex == -1) {
         return nullptr;

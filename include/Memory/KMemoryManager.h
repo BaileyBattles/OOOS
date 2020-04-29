@@ -5,7 +5,7 @@
 #include "Memory/Paging.h"
 #include "Process/Process.h"
 
-#define NUM_PAGES 1032 * MAX_NUM_PROCESSES //Should be a multiple of 8 for simplicity
+#define NUM_PAGES TOTAL_MEMORY / (PAGE_SIZE) //Should be a multiple of 8 for simplicity
 #define KERNEL_HEAP_SIZE 100*KB
 
 #define KMALLOC_SIZE 1
@@ -27,7 +27,7 @@ public:
     void initialize(u32 address);
     void *kmalloc(int numBytes);
     void kfree(void* buffer);
-    void *pagemalloc(); //allocate one page
+    void *pagemallocPhysical(); //allocate one page
 private:
     KMemoryManager(){};
 
@@ -40,6 +40,7 @@ private:
     u8 pagemallocMap[NUM_PAGES / 8];
     int pagemallocBitmapLength;
     void *pagemallocStartAddress;
+
 
     //Bitmap Functions
     //

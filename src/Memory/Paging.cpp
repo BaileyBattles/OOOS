@@ -134,10 +134,10 @@ void causeExamplePageFault() {
 
 PagingStructure PageTableManager::initializeProcessPageTable() {
     PagingStructure structure;
-    structure.pageDirectoryPtr = (PageDirectory *)KMM.pagemalloc();
+    structure.pageDirectoryPtr = (PageDirectory *)KMM.pagemallocPhysical();
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
-        structure.pageTablePtrs[i] = (PageTable *)KMM.pagemalloc();
+        structure.pageTablePtrs[i] = (PageTable *)KMM.pagemallocPhysical();
     }    
     
     for (int i = 0; i < NUM_PAGETABLES; i++) {
