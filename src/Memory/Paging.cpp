@@ -5,6 +5,7 @@
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
 #include "Process/Process.h"
+#include "Util/Memcpy.h"
 
 void initializePageTableEntry(PageTableEntry entry, u32 data) {
     entry = data;
@@ -118,6 +119,20 @@ u32 PageTableManager::setContinuousPageTable(PageTable &pageTable, u32 baseAddre
     return currentAddress;
 }
 
+void PageTableManager::mapNewPagingStructure(PagingStructure &newStructure) {
+    u32 address = (u32)newStructure.pageDirectoryPtr;
+    mapPage(&pagingStructure, address, address,false);
+    for (int i = 0; i < NUM_PAGETABLES; i++) {
+        u32 address = (u32)newStructure.pageTablePtrs[i];
+        mapPage(&pagingStructure, address, address,false);
+    }
+    memory_set(newStructure.pageDirectoryPtr, '\0', PAGEMALLOC_SIZE);
+    for (int i = 0; i < NUM_PAGETABLES; i++) {
+        memory_set(newStructure.pageTablePtrs[i], '\0', PAGEMALLOC_SIZE);
+    }
+}
+
+
 void PageTableManager::mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user ) {
     PageTableEntry *pte = getPageTableEntry(structure, virtualAddress);
     setPTEBaseAddress(*pte, physicalAddress);
@@ -138,7 +153,9 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
 
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         structure.pageTablePtrs[i] = (PageTable *)KMM.pagemallocPhysical();
-    }    
+    }  
+    if (pagingInitialized)  
+        mapNewPagingStructure(structure);
     
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         setPDEPresent(structure.pageDirectoryPtr->entry[i]);
@@ -149,9 +166,13 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
     }
     int numPhysicalPages = TOTAL_MEMORY / 4096;
 
+    if (pagingInitialized)
+        preserveKernelMapping(structure, pagingStructure);
+    else
+        initializeKernelMapping(structure);
+    
     for (int i = 0; i < numPhysicalPages / 2; i++) {
         u32 offset = i*4096;
-        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, false);
         mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
     }
     return structure;
@@ -164,7 +185,7 @@ void PageTableManager::initialize() {
     registerISRHandler(this, 14);
     write_cr3((u32)pagingStructure.pageDirectoryPtr);
     initialize_cr0();
-
+    pagingInitialized = true;
     //causeExamplePageFault();
 }
 
@@ -179,6 +200,17 @@ void PageTableManager::handleInterrupt(registers_t r) {
     kprint("Page Fault\n");
 }
 
+void PageTableManager::initializeKernelMapping(PagingStructure& structure) {
+    int numPhysicalPages = TOTAL_MEMORY / 4096;
+    for (int i = 0; i < numPhysicalPages / 2; i++) {
+        u32 offset = i*4096;
+        if (offset >= 0x534000)
+            return;
+        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, false);
+    }
+}
+
+
 PageTableEntry *PageTableManager::getPageTableEntry(PagingStructure *structure, u32 virtualAddress) {
     u32 pdIndex = virtualAddress >> 22;
     PageDirectoryEntry pde = structure->pageDirectoryPtr->entry[pdIndex];
@@ -192,6 +224,18 @@ u32 PageTableManager::physicalAddress(PagingStructure *structure, u32 virtualAdd
     u32 baseAddress = pteBaseAddress(*pte);
     return *pte + (virtualAddress & 0xFFF);
 }
+
+void PageTableManager::preserveKernelMapping(PagingStructure& newStructure,
+                                             PagingStructure& oldStructure){
+    for (int virtAddress = 0; virtAddress < USERSPACE_START_VIRTUAL; virtAddress += (PAGE_SIZE)){
+        PageTableEntry *entry = getPageTableEntry(&oldStructure, virtAddress);
+        if (ptePresent(*entry)) {
+            PageTableEntry *newEntry = getPageTableEntry(&newStructure, virtAddress);
+            *newEntry = *entry;
+        }
+    }                                            
+}
+
 
 u32 PageTableManager::read_cr3()
 {

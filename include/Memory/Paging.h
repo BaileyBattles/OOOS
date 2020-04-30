@@ -89,20 +89,26 @@ public:
     void pageTableSwitch(Process* process);
 
 private:
-    PageTableManager(){};
-    
+    PageTableManager(){pagingInitialized = false;}
+    bool pagingInitialized;
     void initialize_cr0();
     void write_cr3(u32 cr3);
     void makeIdentityMapping(u32 start, u32 length);
 
     u32 read_cr3();
     u32 read_cr2();
+    u32 read_cr0();
+
     PagingStructure pagingStructure;
     u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress);
     PageTableEntry *getPageTableEntry(PagingStructure *structure, u32 virtualAddress);
     u32 physicalAddress(PagingStructure *structure, u32 virtualAddress);
+    
+    //Map the new paging structure into the kernel
+    void mapNewPagingStructure(PagingStructure &newStructure);
+    void preserveKernelMapping(PagingStructure& newStructure, PagingStructure& oldStructure);
+    void initializeKernelMapping(PagingStructure& structure);
 
-    u32 read_cr0();
 };
 
 #endif

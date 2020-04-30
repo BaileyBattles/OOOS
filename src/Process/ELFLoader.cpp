@@ -2,7 +2,7 @@
 #include "Process/ELFLoader.h"
 
 ELFInfo ELFLoader::load(const char path[]) {
-    char *buffer = (char*)0x1000000;
+    char *buffer = (char*)0x81000000;
     ELFInfo info;
     int fd = VFS.open(path, 0);
     VFS.read(fd, buffer, 4500);

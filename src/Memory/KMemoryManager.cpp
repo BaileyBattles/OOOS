@@ -45,7 +45,6 @@ void *KMemoryManager::pagemallocPhysical(){
         return nullptr;
     }
     setChunkUsed(startIndex, 1, pagemallocMap);
-    memory_set(pagemallocStartAddress + startIndex * PAGEMALLOC_SIZE, '\0', PAGEMALLOC_SIZE);
     return pagemallocStartAddress + startIndex * PAGEMALLOC_SIZE;
 }
 
