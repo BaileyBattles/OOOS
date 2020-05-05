@@ -14,11 +14,9 @@ Process Process::createInitProcess(void (*func)(Process *)) {
     func(initProcess);
 }
 
-Process Process::createChildProcess(const char thePath[], int level, bool user) {
+Process Process::createChildProcess(int level, bool user) {
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
-    childProcess.path = (char *)KMM.kmalloc(strlen(thePath) + 1);
-    memory_copy((const void*)thePath, (void*)childProcess.path, strlen(thePath) + 1);
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     childProcess.isUserMode = user;
     return childProcess;
@@ -51,11 +49,11 @@ PagingStructure* Process::getPagingStructure() {
     return &pagingStructure;
 }
 
-void Process::exec() {
+void Process::exec(const char path[]) {
     PCB oldPcb;
     storeRegisters(oldPcb);
     PageTableManager::the().pageTableSwitch(this);
-    PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 2);
+    PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
     ELFInfo elfInfo = elfLoader.load(path);
 
     currentProcess = this;

@@ -28,8 +28,8 @@ public:
 	friend class IPCSocket;
 
 	static Process createInitProcess(void (*func)(Process *));
-	Process createChildProcess(const char path[], int level, bool user);
-    void exec();
+	Process createChildProcess(int level, bool user);
+    void exec(const char path[]);
 
     PagingStructure *getPagingStructure();
 	void connectToKeyboard(Keyboard *keyboard);
