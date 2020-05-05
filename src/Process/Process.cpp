@@ -54,8 +54,10 @@ PagingStructure* Process::getPagingStructure() {
 void Process::exec() {
     PCB oldPcb;
     storeRegisters(oldPcb);
-    ELFInfo elfInfo = elfLoader.load(path);
     PageTableManager::the().pageTableSwitch(this);
+    PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 2);
+    ELFInfo elfInfo = elfLoader.load(path);
+
     currentProcess = this;
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     

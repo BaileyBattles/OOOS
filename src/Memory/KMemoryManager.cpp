@@ -43,12 +43,12 @@ void KMemoryManager::kfree(void* buffer)
 {
 }
 
-void *KMemoryManager::pagemallocPhysical(){
-    u32 startIndex = findNFree(1, pagemallocMap, pagemallocBitmapLength);
+void *KMemoryManager::pagemallocPhysical(int numPages){
+    u32 startIndex = findNFree(numPages, pagemallocMap, pagemallocBitmapLength);
     if (startIndex == -1) {
         return nullptr;
     }
-    setChunkUsed(startIndex, 1, pagemallocMap);
+    setChunkUsed(startIndex, numPages, pagemallocMap);
     return pagemallocStartAddress + startIndex * PAGEMALLOC_SIZE;
 }
 
@@ -80,19 +80,22 @@ u32 KMemoryManager::findNFree(int numBytes, u8 bitmap[], int bitmapLength){
     u32 numInARow = 0;
     u32 start = 0;
     for (int i = 0; i < bitmapLength; i++){
-        for (int j = 0; j < BITS_IN_BYTE; j++) {
-            int currentIndex = i * BITS_IN_BYTE + j;
-            if (numInARow == numBytes)
-                return start;
+        if (bitmap[i] != 0xFFFF) {
+            for (int j = 0; j < BITS_IN_BYTE; j++) {
+                int currentIndex = i * BITS_IN_BYTE + j;
+                if (numInARow == numBytes)
+                    return start;
 
-            if (indexFree(currentIndex, bitmap)){
-                numInARow += 1;
+                if (indexFree(currentIndex, bitmap)){
+                    numInARow += 1;
+                }
+                else {
+                    numInARow = 0;
+                    start = currentIndex + 1;
+                } 
             }
-            else {
-                numInARow = 0;
-                start = currentIndex + 1;
-            } 
-        } 
+        }
+         
     }
     return -1;
 }

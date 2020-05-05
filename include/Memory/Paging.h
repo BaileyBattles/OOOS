@@ -83,12 +83,14 @@ public:
         return instance;
     }
     PagingStructure initializeProcessPageTable();
-    void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
    
     //this switches the Addressing to the process's paging strucutre
     void pageTableSwitch(Process* process);
 
+    int mmap(void* virtualAddress, int length);
+
 private:
+    void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
     PageTableManager(){pagingInitialized = false;}
     bool pagingInitialized;
     void initialize_cr0();

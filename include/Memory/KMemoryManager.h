@@ -27,8 +27,11 @@ public:
     void initialize(u32 address);
     void *kmalloc(int numBytes);
     void kfree(void* buffer);
-    void *pagemallocPhysical(); //allocate one page
+    void *pagemallocPhysical(int numPages = 1); //allocate one page
     int mallocKernelPages(); //returns the number of kernel pages
+
+    static void *calculateNextAllignedAddress(u32 address, u32 pageSize);
+
 private:
     KMemoryManager(){};
 
@@ -54,7 +57,6 @@ private:
     void setChunkUsed(u32 index, int numBytes, u8 bitmap[]);
     void setIndexUsed(u32 index, u8 bitmap[]);
     
-    void *calculateNextAllignedAddress(u32 address, u32 pageSize);
 };
 
 #endif

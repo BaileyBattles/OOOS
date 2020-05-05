@@ -179,10 +179,10 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
 
     //Map the new userland
     int numPhysicalPages = TOTAL_MEMORY / 4096;
-    for (int i = 0; i < numPhysicalPages / 2; i++) {
-        u32 offset = i*4096;
-        mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
-    }
+    // for (int i = 0; i < numPhysicalPages / 2; i++) {
+    //     u32 offset = i*4096;
+    //     mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
+    // }
 
     return structure;
 }
@@ -199,10 +199,35 @@ void PageTableManager::initialize() {
     //causeExamplePageFault();
 }
 
+int PageTableManager::mmap(void *virtualAddress, int length) {
+    if ((u32)virtualAddress < USERSPACE_START_VIRTUAL) {
+        kprint("mmap : Cannot MMAP into kernel space\n");
+        return -1;
+    }
+    PageTableEntry *entry = getPageTableEntry(&pagingStructure, (u32)virtualAddress);
+    if (ptePresent(*entry)) {
+        kprint("mmap : Virtual Address already mapped\n");
+        return -1;
+    }
+    u32 startAddress = (u32)KMemoryManager::calculateNextAllignedAddress((u32)virtualAddress, PAGE_SIZE);
+    int numPages = length / (PAGE_SIZE) + 1;
+    void *physicalAddress = KMM.pagemallocPhysical(numPages);
+
+    for (int i = 0; i < numPages; i++) {
+        int offset = i*4096;
+        if (physicalAddress == nullptr) {
+            kprint("mmap : Ran out of physical memory\n");
+            return -1;
+        }
+        mapPage(&pagingStructure, (u32)virtualAddress + offset, (u32)physicalAddress + offset, true);
+    }
+    
+}
+
 void PageTableManager::pageTableSwitch(Process *process) {
     PagingStructure *structure = process->getPagingStructure();
     write_cr3((u32)structure->pageDirectoryPtr);
-    PageTableEntry *entry = getPageTableEntry(structure, USERSPACE_START_VIRTUAL);
+    pagingStructure = *structure;
 }
 
 void PageTableManager::handleInterrupt(registers_t r) {
