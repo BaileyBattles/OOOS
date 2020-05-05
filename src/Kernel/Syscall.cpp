@@ -33,5 +33,5 @@ int _exec(char* buffer, char *result) {
 }
 
 int _ls(char* buffer, char *result) {
-    VFS.ls("/");
+    VFS.ls("/BIN");
 }

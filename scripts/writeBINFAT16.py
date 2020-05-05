@@ -85,6 +85,7 @@ def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
         with open(disk_file_name, 'r+b') as disk_file:
             contents = data_file.read()
             num_clusters = int(len(contents) / (CLUSTER_SIZE)) + 1
+            print(num_clusters)
             for i in range(num_clusters - 1):
                 nextCluster = currClusterNum + 1
                 byte_entry = nextCluster.to_bytes(2, byteorder='little')
@@ -95,7 +96,7 @@ def write_file_to_bin(filename, disk_file_name, filenumber, currClusterNum):
             disk_file.seek(start_cluster * CLUSTER_SIZE)
             disk_file.write(contents)
             write_fileentry_to_bin(disk_file_name, filename[1], start_cluster, filenumber, len(contents))
-    return (filenumber + 1, currClusterNum)
+    return (filenumber + 1, currClusterNum + 1)
 
 
 def main():
@@ -105,8 +106,9 @@ def main():
     #TO WRITE NEW FILE ADD ANOTHER (filenumber, currClusterNum) =write_file_to_bin(filename, DISK_NAME, filenumber, currClusterNum)
     write_fat(DISK_NAME)
     filenames = []
-    #filenames.append((os.path.join(os.getcwd(), 'src/Userland/hello_world.o'), 'FILE'))
     filenames.append((os.path.join(os.getcwd(), 'src/Userland/sh.o'), 'SH'))
+    filenames.append((os.path.join(os.getcwd(), 'src/Userland/ls.o'), 'LS'))
+
     write_root_and_bin_cluster(DISK_NAME)
     filenumber = 2 #Pass over dot and double dot
     currClusterNum = ROOT_CLUSTER + 2 #We start with the cluster after BIN
