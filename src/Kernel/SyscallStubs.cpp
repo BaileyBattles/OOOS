@@ -27,3 +27,6 @@ int exec(char *buffer) {
     return call_syscall(3, (void*)buffer, nullptr);
 }
 
+int ls() {
+    return call_syscall(4, nullptr, nullptr);
+}

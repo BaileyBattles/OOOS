@@ -1,5 +1,6 @@
 #include "CPU/InterruptManager.h"
 #include "Drivers/Screen.h"
+#include "FS/VFS.h"
 #include "Process/Process.h"
 #include "Util/String.h"
 #include "Kernel/Syscall.h"
@@ -29,4 +30,8 @@ int _fork(char* buffer, char *result) {
 
 int _exec(char* buffer, char *result) {
     Process::processQueue[0].exec(buffer);
+}
+
+int _ls(char* buffer, char *result) {
+    VFS.ls("/");
 }

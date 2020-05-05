@@ -16,7 +16,7 @@ int main() {
         if (results[0] == '\n') {
             fork();
             if (made) {
-                exec("/BIN/SH");
+                ls();
             }
             made = true;
             printf("> ");

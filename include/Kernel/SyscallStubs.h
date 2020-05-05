@@ -8,6 +8,7 @@ int printf(char *buffer);
 int getInput(char *buffer);
 int fork();
 int exec(char *buffer);
+int ls();
 
 void theRealGetInput(char *buffer);
 
