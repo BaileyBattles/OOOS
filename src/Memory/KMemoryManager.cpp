@@ -10,8 +10,8 @@
 
 
 void KMemoryManager::initialize(u32 address){
-    address = (u32)calculateNextAllignedAddress(address, PAGE_SIZE);
-    kmallocStartAddress = (void*)address;
+    endOfStaticMemory = (u32)calculateNextAllignedAddress(address, PAGE_SIZE);
+    kmallocStartAddress = (void*)endOfStaticMemory;
     memory_set((void*)kmallocMap, 0, KERNEL_HEAP_SIZE / 8);
     kmallocBitmapLength = KERNEL_HEAP_SIZE / 8;
 
@@ -19,7 +19,11 @@ void KMemoryManager::initialize(u32 address){
     memory_set((void*)pagemallocMap, 0, NUM_PAGES / 8);
 
     //set the pages used by the kernel as used
-    int numKernelPages = (address + KERNEL_HEAP_SIZE) / (PAGE_SIZE) + 1;
+
+}
+
+int KMemoryManager::mallocKernelPages() {
+    numKernelPages = (endOfStaticMemory + KERNEL_HEAP_SIZE) / (PAGE_SIZE) + 1;
     pagemallocBitmapLength = NUM_PAGES / 8;
         for (int i = 0; i < numKernelPages; i++) {
         setIndexUsed(i, pagemallocMap);

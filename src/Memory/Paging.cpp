@@ -119,17 +119,17 @@ u32 PageTableManager::setContinuousPageTable(PageTable &pageTable, u32 baseAddre
     return currentAddress;
 }
 
-void PageTableManager::mapNewPagingStructure(PagingStructure &newStructure) {
+void PageTableManager::mapNewPagingStructure(PagingStructure &newStructure, PagingStructure &oldStructure) {
     u32 address = (u32)newStructure.pageDirectoryPtr;
-    mapPage(&pagingStructure, address, address,false);
+    mapPage(&oldStructure, address, address,false);
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         u32 address = (u32)newStructure.pageTablePtrs[i];
-        mapPage(&pagingStructure, address, address,false);
+        mapPage(&oldStructure, address, address,false);
     }
-    memory_set(newStructure.pageDirectoryPtr, '\0', PAGEMALLOC_SIZE);
-    for (int i = 0; i < NUM_PAGETABLES; i++) {
-        memory_set(newStructure.pageTablePtrs[i], '\0', PAGEMALLOC_SIZE);
-    }
+    // memory_set(newStructure.pageDirectoryPtr, '\0', PAGEMALLOC_SIZE);
+    // for (int i = 0; i < NUM_PAGETABLES; i++) {
+    //     memory_set(newStructure.pageTablePtrs[i], '\0', PAGEMALLOC_SIZE);
+    // }
 }
 
 
@@ -148,15 +148,18 @@ void causeExamplePageFault() {
 }
 
 PagingStructure PageTableManager::initializeProcessPageTable() {
+    //Initialize the new paging structure
     PagingStructure structure;
     structure.pageDirectoryPtr = (PageDirectory *)KMM.pagemallocPhysical();
-
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         structure.pageTablePtrs[i] = (PageTable *)KMM.pagemallocPhysical();
     }  
-    if (pagingInitialized)  
-        mapNewPagingStructure(structure);
+
+    //map the new paging structure in
+    if (pagingInitialized)
+        mapNewPagingStructure(structure, pagingStructure);
     
+    //Write to the new pagetable
     for (int i = 0; i < NUM_PAGETABLES; i++) {
         setPDEPresent(structure.pageDirectoryPtr->entry[i]);
         setPDEWriteable(structure.pageDirectoryPtr->entry[i]);
@@ -164,21 +167,28 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
         setPDEBaseAddress(structure.pageDirectoryPtr->entry[i], 
                                 (u32)structure.pageTablePtrs[i]);
     }
-    int numPhysicalPages = TOTAL_MEMORY / 4096;
 
-    if (pagingInitialized)
+    //Map the kernel
+    if (pagingInitialized) {
         preserveKernelMapping(structure, pagingStructure);
-    else
+    }
+    else {
         initializeKernelMapping(structure);
-    
+        mapNewPagingStructure(structure, structure);
+    }
+
+    //Map the new userland
+    int numPhysicalPages = TOTAL_MEMORY / 4096;
     for (int i = 0; i < numPhysicalPages / 2; i++) {
         u32 offset = i*4096;
         mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
     }
+
     return structure;
 }
 
 void PageTableManager::initialize() {
+    KMM.mallocKernelPages();
     pagingStructure = initializeProcessPageTable();
     //Map first 256 GB of kernel to 0-256 GB physical
 
@@ -201,12 +211,10 @@ void PageTableManager::handleInterrupt(registers_t r) {
 }
 
 void PageTableManager::initializeKernelMapping(PagingStructure& structure) {
-    int numPhysicalPages = TOTAL_MEMORY / 4096;
-    for (int i = 0; i < numPhysicalPages / 2; i++) {
+    int numPhysicalPages = KMM.mallocKernelPages();
+    for (int i = 0; i < numPhysicalPages; i++) {
         u32 offset = i*4096;
-        if (offset >= 0x534000)
-            return;
-        mapPage(&structure, KERNEL_START_VIRTUAL + offset, offset, false);
+        mapPage(&structure, offset, offset, false);
     }
 }
 

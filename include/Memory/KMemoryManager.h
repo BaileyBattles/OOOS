@@ -28,6 +28,7 @@ public:
     void *kmalloc(int numBytes);
     void kfree(void* buffer);
     void *pagemallocPhysical(); //allocate one page
+    int mallocKernelPages(); //returns the number of kernel pages
 private:
     KMemoryManager(){};
 
@@ -41,6 +42,8 @@ private:
     int pagemallocBitmapLength;
     void *pagemallocStartAddress;
 
+    int numKernelPages;
+    u32 endOfStaticMemory;
 
     //Bitmap Functions
     //

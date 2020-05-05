@@ -105,7 +105,7 @@ private:
     u32 physicalAddress(PagingStructure *structure, u32 virtualAddress);
     
     //Map the new paging structure into the kernel
-    void mapNewPagingStructure(PagingStructure &newStructure);
+    void mapNewPagingStructure(PagingStructure &newStructure, PagingStructure &oldStructure);
     void preserveKernelMapping(PagingStructure& newStructure, PagingStructure& oldStructure);
     void initializeKernelMapping(PagingStructure& structure);
 
