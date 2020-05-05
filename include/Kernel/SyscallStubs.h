@@ -9,6 +9,7 @@ int getInput(char *buffer);
 int fork();
 int exec(char *buffer);
 int ls();
+int exit();
 
 void theRealGetInput(char *buffer);
 

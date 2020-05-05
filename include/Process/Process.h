@@ -47,7 +47,7 @@ private:
     
 	
 	IPCSocket socket;
-	static void enterUserMode(u32 entryAddress);
+	static void enterUserMode(u32 entryAddress, PCB &pcb);
     PagingStructure pagingStructure;
     int loadElf(const char path[]);
 	void storeRegisters(PCB &processControlBlock);

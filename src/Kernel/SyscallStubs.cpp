@@ -30,3 +30,7 @@ int exec(char *buffer) {
 int ls() {
     return call_syscall(4, nullptr, nullptr);
 }
+
+int exit() {
+    return call_syscall(5, nullptr, nullptr);
+}

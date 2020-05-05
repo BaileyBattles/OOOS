@@ -35,3 +35,12 @@ int _exec(char* buffer, char *result) {
 int _ls(char* buffer, char *result) {
     VFS.ls("/BIN");
 }
+
+int _exit(char* buffer, char *result) {
+    // asm volatile("movl %%eax, %%esp" ::"a"(0x10be68)
+    //             : "memory");
+    // ((void (*)(void))0x10562d)();
+
+    while (true)
+        ;
+}

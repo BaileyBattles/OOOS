@@ -65,7 +65,7 @@ void Process::exec(const char path[]) {
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     
     if (isUserMode) {
-        enterUserMode(elfInfo.entryAddress);
+        enterUserMode(elfInfo.entryAddress, parent->pcb);
     }
     else {
         ((void (*)(void))elfInfo.entryAddress)();
@@ -79,8 +79,12 @@ void Process::storeRegisters(PCB &processControlBlock) {
     //asm("\t movl %%ebp,%0" : "=r"(processControlBlock.ebp));
 }
 
-void Process::enterUserMode(u32 entryAddress) {
+void Process::enterUserMode(u32 entryAddress, PCB &pcb) {
     u32 val;
+    __asm__("movl %%ebp,%0" : "=r"(val));
+    pcb.eip = *(u32*)(val + 4);
+    __asm__("movl %%ebp,%0" : "=r"(pcb.esp));
+    
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
     asm volatile("movl %%eax, %%esp" ::"a"(USERSPACE_START_VIRTUAL + 0x1000)
