@@ -24,11 +24,12 @@ class Keyboard;
 class Process {
 public:
 	static Process *currentProcess;
+	static Process processQueue[8];
 
 	friend class IPCSocket;
 
 	static Process createInitProcess(void (*func)(Process *));
-	Process createChildProcess(int level, bool user);
+	Process createChildProcess(bool user);
     void exec(const char path[]);
 
     PagingStructure *getPagingStructure();

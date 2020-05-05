@@ -107,7 +107,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 }
 
 void stage2(Process *initProcess) {
-    Process childProcess = initProcess->createChildProcess(0, true);
+    Process childProcess = initProcess->createChildProcess(true);
     childProcess.connectToKeyboard(&keyboard); 
     Process::currentProcess = &childProcess;
     childProcess.exec("/BIN/SH");

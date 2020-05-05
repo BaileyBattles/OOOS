@@ -9,10 +9,17 @@ int main() {
     if (x == 100) {
         printf("Did it\n");
     }
+    bool made = false;
     while (true) {
         getInput(results);
         printf(results);
-        if (results[0] == '\n')
+        if (results[0] == '\n') {
+            fork();
+            if (made) {
+                exec("/BIN/SH");
+            }
+            made = true;
             printf("> ");
+        }
     }
 }

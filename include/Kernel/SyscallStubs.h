@@ -6,6 +6,8 @@
 //Sycalls
 int printf(char *buffer);
 int getInput(char *buffer);
+int fork();
+int exec(char *buffer);
 
 void theRealGetInput(char *buffer);
 

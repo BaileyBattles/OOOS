@@ -6,6 +6,8 @@
 #include "Util/String.h"
 
 Process* Process::currentProcess;
+Process Process::processQueue[];
+
 extern "C" void enteruser(u32 entryPoint);
 
 Process Process::createInitProcess(void (*func)(Process *)) {
@@ -14,11 +16,12 @@ Process Process::createInitProcess(void (*func)(Process *)) {
     func(initProcess);
 }
 
-Process Process::createChildProcess(int level, bool user) {
+Process Process::createChildProcess(bool user) {
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     childProcess.isUserMode = user;
+    childProcess.socket = this->socket;
     return childProcess;
 }
 
@@ -52,9 +55,11 @@ PagingStructure* Process::getPagingStructure() {
 void Process::exec(const char path[]) {
     PCB oldPcb;
     storeRegisters(oldPcb);
+    char *copiedPath = (char*)KMM.kmalloc(strlen(path) + 1);
+    strcpy(path, copiedPath);
     PageTableManager::the().pageTableSwitch(this);
     PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
-    ELFInfo elfInfo = elfLoader.load(path);
+    ELFInfo elfInfo = elfLoader.load(copiedPath);
 
     currentProcess = this;
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;

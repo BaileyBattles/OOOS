@@ -17,6 +17,16 @@ int _kprint(char* buffer, char* result){
 
 int _getInput(char* buffer, char* result) {
     result[0] = '\0';
-    Process::currentProcess->theSocket()->read(result, 1);
+    if (Process::currentProcess->theSocket() != nullptr)
+        Process::currentProcess->theSocket()->read(result, 1);
     return 0;
+}
+
+int _fork(char* buffer, char *result) {
+    Process newProcess = Process::currentProcess->createChildProcess(true);
+    Process::processQueue[0] = newProcess;
+}
+
+int _exec(char* buffer, char *result) {
+    Process::processQueue[0].exec(buffer);
 }

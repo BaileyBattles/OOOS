@@ -19,3 +19,11 @@ int getInput(char *buffer) {
     return call_syscall(1, nullptr, (void*)buffer);
 }
 
+int fork() {
+    return call_syscall(2, nullptr, nullptr);
+}
+
+int exec(char *buffer) {
+    return call_syscall(3, (void*)buffer, nullptr);
+}
+
