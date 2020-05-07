@@ -2,6 +2,7 @@
 #include "Drivers/Screen.h"
 #include "FS/VFS.h"
 #include "Process/Process.h"
+#include "Process/Scheduler.h"
 #include "Util/String.h"
 #include "Kernel/Syscall.h"
 
@@ -18,18 +19,19 @@ int _kprint(char* buffer, char* result){
 
 int _getInput(char* buffer, char* result) {
     result[0] = '\0';
-    if (Process::currentProcess->theSocket() != nullptr)
-        Process::currentProcess->theSocket()->read(result, 1);
+    Process* theProcess = Scheduler::the().runningProcess();
+    if (theProcess->theSocket() != nullptr)
+         theProcess->theSocket()->read(result, 1);
     return 0;
 }
 
 int _fork(char* buffer, char *result) {
-    Process newProcess = Process::currentProcess->createChildProcess(true);
-    Process::processQueue[0] = newProcess;
+    // Process newProcess = Process::currentProcess->createChildProcess(true);
+    // Process::processQueue[0] = newProcess;
 }
 
 int _exec(char* buffer, char *result) {
-    Process::processQueue[0].exec(buffer);
+    // Process::processQueue[0].exec(buffer);
 }
 
 int _ls(char* buffer, char *result) {

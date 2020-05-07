@@ -187,6 +187,10 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
     return structure;
 }
 
+PagingStructure PageTableManager::getCurrentPagingStructure() {
+    return pagingStructure;
+}
+
 void PageTableManager::initialize() {
     KMM.mallocKernelPages();
     pagingStructure = initializeProcessPageTable();

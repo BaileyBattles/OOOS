@@ -11,11 +11,24 @@ void Scheduler::scheduleProcess(Process* process) {
     numProcesses++;
 }
 
+Process* Scheduler::runningProcess() {
+    return currentProcess;
+}
+
 void Scheduler::runNext() {
     Process *nextProcess = processQueue[0];
     for (int i = 0; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];
     }
     processQueue[numProcesses - 1] = nextProcess;
+    currentProcess = nextProcess;
     nextProcess->run();
+}
+
+void Scheduler::exit() {
+    for (int i = 0; i < numProcesses - 1; i++) {
+        processQueue[i] = processQueue[i + 1];
+    }
+    currentProcess = processQueue[0];
+    currentProcess->run();
 }

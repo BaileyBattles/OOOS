@@ -14,12 +14,15 @@ public:
         return instance;
     }
     void scheduleProcess(Process* process);
+    Process* runningProcess();
     //Round robin for now
     void runNext();
+    void exit();
 private:
     Scheduler();
 
     Process** processQueue;
+    Process* currentProcess;
     int numProcesses;
 };
 

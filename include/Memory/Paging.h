@@ -89,6 +89,8 @@ public:
 
     int mmap(void* virtualAddress, int length);
 
+    PagingStructure getCurrentPagingStructure();
+
 private:
     void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
     PageTableManager(){pagingInitialized = false;}

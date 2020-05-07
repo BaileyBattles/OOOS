@@ -23,9 +23,6 @@ class Keyboard;
 
 class Process {
 public:
-	static Process *currentProcess;
-	static Process processQueue[8];
-
 	friend class IPCSocket;
 
 	static Process createInitProcess(void (*func)(Process *));

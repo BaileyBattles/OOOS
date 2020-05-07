@@ -6,15 +6,13 @@
 #include "Process/Scheduler.h"
 #include "Util/String.h"
 
-Process* Process::currentProcess;
-Process Process::processQueue[];
-
 extern "C" void enteruser(u32 entryPoint);
 
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
     memory_set(initProcess, '\0', sizeof(Process));
     initProcess->pcb.eip = (u32)func;
+    initProcess->pagingStructure = PageTableManager::the().getCurrentPagingStructure();
     Scheduler::the().scheduleProcess(initProcess);
     //func(initProcess);
 }
@@ -34,8 +32,13 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 }
 
 void Process::run() {
-    //PageTableManager::the().pageTableSwitch(this);
-    ((void (*)(Process*))pcb.eip)(this);
+    PageTableManager::the().pageTableSwitch(this);
+    if (isUserMode) {
+        enterUserMode(pcb.eip, parent->pcb);
+    }
+    else {
+        ((void (*)(Process*))pcb.eip)(this);
+    }
 }
 
 IPCSocket *Process::theSocket() {
@@ -61,6 +64,7 @@ PagingStructure* Process::getPagingStructure() {
 }
 
 void Process::exec(const char path[]) {
+    path = "/BIN/SH";
     PCB oldPcb;
     storeRegisters(oldPcb);
     char *copiedPath = (char*)KMM.kmalloc(strlen(path) + 1);
@@ -69,15 +73,9 @@ void Process::exec(const char path[]) {
     PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
     ELFInfo elfInfo = elfLoader.load(copiedPath);
 
-    currentProcess = this;
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
-    
-    if (isUserMode) {
-        enterUserMode(elfInfo.entryAddress, parent->pcb);
-    }
-    else {
-        ((void (*)(void))elfInfo.entryAddress)();
-    }
+    pcb.eip = elfInfo.entryAddress;
+
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
 }
