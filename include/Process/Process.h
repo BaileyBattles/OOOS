@@ -37,6 +37,8 @@ public:
 	void readFromIPC();
 	IPCSocket *theSocket();
 
+	void run();
+
 
 private:
     char *path;

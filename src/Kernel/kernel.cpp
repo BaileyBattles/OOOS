@@ -13,6 +13,7 @@
 #include "Memory/KMemoryManager.h"
 #include "Memory/Paging.h"
 #include "Process/Process.h"
+#include "Process/Scheduler.h"
 #include "Util/String.h"
 
 //Global Variables
@@ -101,6 +102,7 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
     VFS.mount(*fileSystem, 'A');
 
     Process init = Process::createInitProcess(stage2);
+    Scheduler::the().runNext();
     while (true) {
         kprint("Init Process didn't get started");
     }

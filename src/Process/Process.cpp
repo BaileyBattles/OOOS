@@ -3,6 +3,7 @@
 #include "FS/VFS.h"
 #include "Memory/KMemoryManager.h"
 #include "Process/Process.h"
+#include "Process/Scheduler.h"
 #include "Util/String.h"
 
 Process* Process::currentProcess;
@@ -13,7 +14,9 @@ extern "C" void enteruser(u32 entryPoint);
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
     memory_set(initProcess, '\0', sizeof(Process));
-    func(initProcess);
+    initProcess->pcb.eip = (u32)func;
+    Scheduler::the().scheduleProcess(initProcess);
+    //func(initProcess);
 }
 
 Process Process::createChildProcess(bool user) {
@@ -28,6 +31,11 @@ Process Process::createChildProcess(bool user) {
 void Process::connectToKeyboard(Keyboard *keyboard) {
     if (keyboard != nullptr)
         keyboard->registerTerminal(this);
+}
+
+void Process::run() {
+    //PageTableManager::the().pageTableSwitch(this);
+    ((void (*)(Process*))pcb.eip)(this);
 }
 
 IPCSocket *Process::theSocket() {
