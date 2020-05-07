@@ -18,6 +18,7 @@ public:
     //Round robin for now
     void runNext();
     void exit();
+    void yield();
 private:
     Scheduler();
 

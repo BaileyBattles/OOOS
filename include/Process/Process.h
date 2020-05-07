@@ -35,7 +35,7 @@ public:
 	IPCSocket *theSocket();
 
 	void run();
-
+	void fork();
 
 private:
     char *path;

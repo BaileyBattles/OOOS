@@ -26,7 +26,9 @@ int _getInput(char* buffer, char* result) {
 }
 
 int _fork(char* buffer, char *result) {
-    // Process newProcess = Process::currentProcess->createChildProcess(true);
+    Scheduler::the().runningProcess()->fork();
+    Scheduler::the().runNext();
+    //Scheduler::the().scheduleProcess(&newProcess);
     // Process::processQueue[0] = newProcess;
 }
 

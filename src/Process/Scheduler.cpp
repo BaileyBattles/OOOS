@@ -16,19 +16,24 @@ Process* Scheduler::runningProcess() {
 }
 
 void Scheduler::runNext() {
-    Process *nextProcess = processQueue[0];
+    Process *theProcess = processQueue[0];
     for (int i = 0; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];
     }
-    processQueue[numProcesses - 1] = nextProcess;
-    currentProcess = nextProcess;
-    nextProcess->run();
+    processQueue[numProcesses - 1] = theProcess;
+    currentProcess = processQueue[0];
+    currentProcess->run();
 }
 
 void Scheduler::exit() {
     for (int i = 0; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];
     }
+    numProcesses--;
     currentProcess = processQueue[0];
     currentProcess->run();
+}
+
+void Scheduler::yield() {
+    
 }

@@ -7,6 +7,7 @@
 #include "Util/String.h"
 
 extern "C" void enteruser(u32 entryPoint);
+extern "C" u32 get_eip();
 
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
@@ -20,10 +21,22 @@ Process Process::createInitProcess(void (*func)(Process *)) {
 Process Process::createChildProcess(bool user) {
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
+    
+    PageTableManager::the().pageTableSwitch(&childProcess);
+    PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
+    PageTableManager::the().pageTableSwitch(this);
+
+    
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     childProcess.isUserMode = user;
     childProcess.socket = this->socket;
     return childProcess;
+}
+
+void Process::fork() {
+    Process newProcess = createChildProcess(true);
+    Scheduler::the().scheduleProcess(&newProcess);
+    newProcess.pcb.eip = get_eip();
 }
 
 void Process::connectToKeyboard(Keyboard *keyboard) {
@@ -33,12 +46,13 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 
 void Process::run() {
     PageTableManager::the().pageTableSwitch(this);
-    if (isUserMode) {
-        enterUserMode(pcb.eip, parent->pcb);
-    }
-    else {
+
+    // if (isUserMode) {
+    //     enterUserMode(pcb.eip, parent->pcb);
+    // }
+    // else {
         ((void (*)(Process*))pcb.eip)(this);
-    }
+    //}
 }
 
 IPCSocket *Process::theSocket() {
@@ -70,12 +84,13 @@ void Process::exec(const char path[]) {
     char *copiedPath = (char*)KMM.kmalloc(strlen(path) + 1);
     strcpy(path, copiedPath);
     PageTableManager::the().pageTableSwitch(this);
-    PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
+    
     ELFInfo elfInfo = elfLoader.load(copiedPath);
 
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     pcb.eip = elfInfo.entryAddress;
 
+    PageTableManager::the().pageTableSwitch(Scheduler::the().runningProcess());
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
 }
@@ -87,9 +102,9 @@ void Process::storeRegisters(PCB &processControlBlock) {
 
 void Process::enterUserMode(u32 entryAddress, PCB &pcb) {
     u32 val;
-    __asm__("movl %%ebp,%0" : "=r"(val));
-    pcb.eip = *(u32*)(val + 4);
-    __asm__("movl %%ebp,%0" : "=r"(pcb.esp));
+    // __asm__("movl %%ebp,%0" : "=r"(val));
+    // pcb.eip = *(u32*)(val + 4);
+    // __asm__("movl %%ebp,%0" : "=r"(pcb.esp));
     
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
