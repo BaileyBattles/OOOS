@@ -17,7 +17,7 @@ public:
     Process* runningProcess();
     //Round robin for now
     void runNext();
-    void exit();
+    void removeProcess(Process *process);
     void yield();
 private:
     Scheduler();

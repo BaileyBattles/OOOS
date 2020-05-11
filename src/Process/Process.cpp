@@ -89,7 +89,10 @@ void Process::readFromIPC() {
         }
     }
 }
-
+ 
+void Process::exit() {
+    Scheduler::the().removeProcess(this);
+}
 
 PagingStructure* Process::getPagingStructure() {
     return &pagingStructure;

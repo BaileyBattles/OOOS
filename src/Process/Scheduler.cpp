@@ -25,13 +25,26 @@ void Scheduler::runNext() {
     currentProcess->run();
 }
 
-void Scheduler::exit() {
-    for (int i = 0; i < numProcesses - 1; i++) {
+void Scheduler::removeProcess(Process *process) {
+    int i;  
+    int processNumber = -1;
+    for (i = 0; i < numProcesses; i++) {
+        if (process == processQueue[i])
+            processNumber = i;
+    }
+
+    if (processNumber == -1)
+        return;
+
+    for (int i = processNumber; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];
     }
     numProcesses--;
-    currentProcess = processQueue[0];
-    currentProcess->run();
+
+    if (processNumber == 0) {
+        currentProcess = processQueue[0];
+        currentProcess->run();
+    }
 }
 
 void Scheduler::yield() {

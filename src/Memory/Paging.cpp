@@ -129,10 +129,6 @@ void PageTableManager::mapNewPagingStructure(PagingStructure &newStructure, Pagi
         u32 address = (u32)newStructure.pageTablePtrs[i];
         mapPage(&oldStructure, address, address,false);
     }
-    // memory_set(newStructure.pageDirectoryPtr, '\0', PAGEMALLOC_SIZE);
-    // for (int i = 0; i < NUM_PAGETABLES; i++) {
-    //     memory_set(newStructure.pageTablePtrs[i], '\0', PAGEMALLOC_SIZE);
-    // }
 }
 
 
@@ -180,13 +176,6 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
         mapNewPagingStructure(structure, structure);
     }
 
-    //Map the new userland
-    int numPhysicalPages = TOTAL_MEMORY / 4096;
-    // for (int i = 0; i < numPhysicalPages / 2; i++) {
-    //     u32 offset = i*4096;
-    //     mapPage(&structure, USERSPACE_START_VIRTUAL + offset, offset + (TOTAL_MEMORY / 2), true);
-    // }
-
     return structure;
 }
 
@@ -226,14 +215,6 @@ void PageTableManager::copySegment(PagingStructure *oldStructure, PagingStructur
     void *startPageAddress = KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE) - PAGE_SIZE;
     void *endPageAddress = KMM.calculateNextAllignedAddress((u32)end, PAGE_SIZE) - PAGE_SIZE;
     
-    // PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
-    // u32 physicalAddress = pteBaseAddress(*entry);
-    // mapPage(oldStructure, 0x90000000, physicalAddress, false);
-    // flush_tlb();
-    // u32 offset = (u32)start % (PAGE_SIZE);
-    // u32 length = (u32)end - (u32)start;
-    //memory_copy(start, (void*)(0x90000000 + offset), length);
-    
     u32 currentAddress = (u32)start;
     while (currentAddress < (u32)end) {
         u32 nextPageAddress = (u32)KMM.calculateNextAllignedAddress(currentAddress, PAGE_SIZE);
@@ -264,10 +245,6 @@ void PageTableManager::copySegmentOnSinglePage(PagingStructure *oldStructure, Pa
     u32 offset = (u32)start % (PAGE_SIZE);
     memory_copy(start, (void*)(0x90000000 + offset), length);
 }
-
-
-
-
 
 PagingStructure PageTableManager::getCurrentPagingStructure() {
     return pagingStructure;

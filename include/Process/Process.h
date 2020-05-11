@@ -34,6 +34,7 @@ public:
 	void readFromIPC();
 	IPCSocket *theSocket();
 
+	void exit();
 	void run();
 	int fork();
 

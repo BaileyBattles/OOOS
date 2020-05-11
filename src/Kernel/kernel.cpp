@@ -124,7 +124,7 @@ void stage2(Process *initProcess) {
     Scheduler::the().scheduleProcess(&childProcess);
     childProcess.exec("/BIN/SH");
     u32 val;
-    Scheduler::the().exit();
+    initProcess->exit();;
     kprint("here");
 
     kernelLoop();
