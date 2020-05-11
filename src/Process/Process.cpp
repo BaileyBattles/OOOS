@@ -39,11 +39,9 @@ int Process::fork() {
     Scheduler::the().scheduleProcess(&newProcess);
     newProcess.pcb.eip = get_eip();
 
-    PageTableManager::the().copyMemory(this->getPagingStructure(), 
-                            newProcess.getPagingStructure());
-  
-
     if (pcb.eip == 0) {
+        PageTableManager::the().copyMemory(this->getPagingStructure(), 
+                    newProcess.getPagingStructure());
         asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
         return 1;

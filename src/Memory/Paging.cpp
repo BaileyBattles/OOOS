@@ -212,14 +212,6 @@ void PageTableManager::copyMemory(PagingStructure *oldStructure, PagingStructure
     }
 
     //Kernel Stuff
-    u32 ebp; u32 esp;
-    asm("\t movl %%esp,%0" : "=r"(esp));
-    asm("\t movl %%ebp,%0" : "=r"(ebp));
-    // u32 ebp = KMM.calculateNextAllignedAddress(ebp, PAGE_SIZE);
-    // u32 esp = KMM.calculateNextAllignedAddress(esp, PAGE_SIZE) - PAGE_SIZE;
-
-    u32 end = KMM.endOfKernelToCopy();
-
     for (int i = (int)&s_stack; i < (int)&e_stack; i += PAGE_SIZE) {
         void *physicalAddress = KMM.pagemallocPhysical(1);
         mapPage(oldStructure, 0x90000000, (u32)physicalAddress, false);
@@ -234,36 +226,36 @@ void PageTableManager::copySegment(PagingStructure *oldStructure, PagingStructur
     void *startPageAddress = KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE) - PAGE_SIZE;
     void *endPageAddress = KMM.calculateNextAllignedAddress((u32)end, PAGE_SIZE) - PAGE_SIZE;
     
-    PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
-    u32 physicalAddress = pteBaseAddress(*entry);
-    mapPage(oldStructure, 0x90000000, physicalAddress, false);
-    flush_tlb();
-    u32 offset = (u32)start % (PAGE_SIZE);
-    u32 length = (u32)end - (u32)start;
-    memory_copy(start, (void*)(0x90000000 + offset), length);
+    // PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
+    // u32 physicalAddress = pteBaseAddress(*entry);
+    // mapPage(oldStructure, 0x90000000, physicalAddress, false);
+    // flush_tlb();
+    // u32 offset = (u32)start % (PAGE_SIZE);
+    // u32 length = (u32)end - (u32)start;
+    //memory_copy(start, (void*)(0x90000000 + offset), length);
     
-    // u32 currentAddress = (u32)start;
-    // while (currentAddress < (u32)end) {
-    //     u32 nextPageAddress = (u32)KMM.calculateNextAllignedAddress(currentAddress, PAGE_SIZE);
-    //     if (nextPageAddress == currentAddress) {
-    //         nextPageAddress += PAGE_SIZE;
-    //     }
-    //     u32 length;
-    //     if ((u32)nextPageAddress < (u32)end) {
-    //         length = (u32)nextPageAddress - (u32)currentAddress;
-    //     }
-    //     else {
-    //         length = (u32)end - (u32)currentAddress;
-    //     }
-    //     copySegmentOnSinglePage(oldStructure, newStructure, (void*)currentAddress, length);
-    //     currentAddress += length;
-    // }
+    u32 currentAddress = (u32)start;
+    while (currentAddress < (u32)end) {
+        u32 nextPageAddress = (u32)KMM.calculateNextAllignedAddress(currentAddress, PAGE_SIZE);
+        if (nextPageAddress == currentAddress) {
+            nextPageAddress += PAGE_SIZE;
+        }
+        u32 length;
+        if ((u32)nextPageAddress < (u32)end) {
+            length = (u32)nextPageAddress - (u32)currentAddress;
+        }
+        else {
+            length = (u32)end - (u32)currentAddress;
+        }
+        copySegmentOnSinglePage(oldStructure, newStructure, (void*)currentAddress, length);
+        currentAddress += length;
+    }
 }
 
 void PageTableManager::copySegmentOnSinglePage(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, u32 length) {
-    u32 startPageAddress = (u32)KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE);
-    if (startPageAddress % (PAGE_SIZE) != 0) {
-        startPageAddress -= PAGE_SIZE;
+    u32 startPageAddress = (u32)KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE) - PAGE_SIZE;
+    if ((u32)start % (PAGE_SIZE) == 0) {
+        startPageAddress += PAGE_SIZE;
     }
     PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
     u32 physicalAddress = pteBaseAddress(*entry);
@@ -319,10 +311,10 @@ int PageTableManager::mmap(void *virtualAddress, int length) {
 }
 
 void PageTableManager::pageTableSwitch(Process *process) {
-    u32 ebp; u32 esp;
+    u32 *ebp; u32 esp;
     asm("\t movl %%esp,%0" : "=r"(esp));
     asm("\t movl %%ebp,%0" : "=r"(ebp));
-    copySegment(&pagingStructure, process->getPagingStructure(), (void*)esp, (void*)(ebp + 0x60));
+    copySegment(&pagingStructure, process->getPagingStructure(), (void*)esp, (void*)(*ebp));
     
     PagingStructure *structure = process->getPagingStructure();
     asm volatile("movl %%eax, %%cr3" ::"a"((u32)structure->pageDirectoryPtr)
