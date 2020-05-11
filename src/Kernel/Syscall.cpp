@@ -26,8 +26,9 @@ int _getInput(char* buffer, char* result) {
 }
 
 int _fork(char* buffer, char *result) {
-    Scheduler::the().runningProcess()->fork();
-    Scheduler::the().runNext();
+    int val = Scheduler::the().runningProcess()->fork();
+    //Scheduler::the().runNext();
+    return val;
     //Scheduler::the().scheduleProcess(&newProcess);
     // Process::processQueue[0] = newProcess;
 }
@@ -47,4 +48,8 @@ int _exit(char* buffer, char *result) {
 
     while (true)
         ;
+}
+
+int _yield(char* buffer, char* retsult) {
+    Scheduler::the().runNext();
 }

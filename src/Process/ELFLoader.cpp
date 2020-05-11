@@ -5,7 +5,7 @@ ELFInfo ELFLoader::load(const char path[]) {
     char *buffer = (char*)0x81000000;
     ELFInfo info;
     int fd = VFS.open(path, 0);
-    VFS.read(fd, buffer, 4500);
+    VFS.read(fd, buffer, 7600);
     Elf32_Ehdr header;
     memory_copy(buffer, (char *)&header, sizeof(Elf32_Ehdr));
     info.entryAddress = header.e_entry;

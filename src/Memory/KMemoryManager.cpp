@@ -8,6 +8,8 @@
 // kMemoryManager //
 ////////////////////
 
+extern "C" u32 e_stack;
+
 
 void KMemoryManager::initialize(u32 address){
     endOfStaticMemory = (u32)calculateNextAllignedAddress(address, PAGE_SIZE);
@@ -22,8 +24,12 @@ void KMemoryManager::initialize(u32 address){
 
 }
 
+u32 KMemoryManager::endOfKernelToCopy() {
+    //return (u32)calculateNextAllignedAddress((u32)&e_nonstatic, PAGE_SIZE);
+}
+
 int KMemoryManager::mallocKernelPages() {
-    numKernelPages = (endOfStaticMemory + KERNEL_HEAP_SIZE) / (PAGE_SIZE) + 1;
+    numKernelPages = ((u32)&e_stack + KERNEL_HEAP_SIZE) / (PAGE_SIZE) + 1;
     pagemallocBitmapLength = NUM_PAGES / 8;
         for (int i = 0; i < numKernelPages; i++) {
         setIndexUsed(i, pagemallocMap);

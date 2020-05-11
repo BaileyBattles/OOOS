@@ -14,9 +14,13 @@ int main() {
         getInput(results);
         printf(results);
         if (results[0] == '\n') {
-            fork();
-            if (made) {
-                ls();
+            int x = fork();
+            if (x == 0) {
+                printf("Child");
+            }
+            else {
+                printf("Parent");
+                yield();
             }
             made = true;
             printf("> ");

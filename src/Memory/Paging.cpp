@@ -7,6 +7,9 @@
 #include "Process/Process.h"
 #include "Util/Memcpy.h"
 
+extern "C" u32 s_stack;
+extern "C" u32 e_stack;
+
 void initializePageTableEntry(PageTableEntry entry, u32 data) {
     entry = data;
 }
@@ -187,6 +190,93 @@ PagingStructure PageTableManager::initializeProcessPageTable() {
     return structure;
 }
 
+void PageTableManager::copyMemory(PagingStructure *oldStructure, PagingStructure *newStructure) {
+
+    //Userland stuff
+    for (int i = USERSPACE_START_VIRTUAL; i < USERSPACE_START_VIRTUAL + 0x1000; i += (PAGE_SIZE)) {
+        PageTableEntry *entry = getPageTableEntry(oldStructure, i);
+        if (ptePresent(*entry)) {
+            void *physicalAddress = KMM.pagemallocPhysical(1);
+            mapPage(oldStructure, 0x90000000, (u32)physicalAddress, true);
+            flush_tlb();
+            memory_copy((void*)i, (void*)0x90000000, PAGE_SIZE);
+            mapPage(newStructure, i, (u32)physicalAddress, true);
+        }
+    }
+    for (int i = USERSPACE_START_VIRTUAL + 0x1000; i < USERSPACE_START_VIRTUAL + 0x10f0000; i+= (PAGE_SIZE)) {
+        PageTableEntry *entry = getPageTableEntry(oldStructure, i);
+        if (ptePresent(*entry)) {
+            u32 physicalAddress = pteBaseAddress(*entry);
+            mapPage(newStructure, i, physicalAddress, true);
+        }
+    }
+
+    //Kernel Stuff
+    u32 ebp; u32 esp;
+    asm("\t movl %%esp,%0" : "=r"(esp));
+    asm("\t movl %%ebp,%0" : "=r"(ebp));
+    // u32 ebp = KMM.calculateNextAllignedAddress(ebp, PAGE_SIZE);
+    // u32 esp = KMM.calculateNextAllignedAddress(esp, PAGE_SIZE) - PAGE_SIZE;
+
+    u32 end = KMM.endOfKernelToCopy();
+
+    for (int i = (int)&s_stack; i < (int)&e_stack; i += PAGE_SIZE) {
+        void *physicalAddress = KMM.pagemallocPhysical(1);
+        mapPage(oldStructure, 0x90000000, (u32)physicalAddress, false);
+        flush_tlb();
+        memory_set((void*)0x90000000, '/0', PAGE_SIZE);
+        memory_copy((void*)i, (void*)0x90000000, PAGE_SIZE);
+        mapPage(newStructure, i, (u32)physicalAddress, false);
+    }
+}
+
+void PageTableManager::copySegment(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, void *end) {
+    void *startPageAddress = KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE) - PAGE_SIZE;
+    void *endPageAddress = KMM.calculateNextAllignedAddress((u32)end, PAGE_SIZE) - PAGE_SIZE;
+    
+    PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
+    u32 physicalAddress = pteBaseAddress(*entry);
+    mapPage(oldStructure, 0x90000000, physicalAddress, false);
+    flush_tlb();
+    u32 offset = (u32)start % (PAGE_SIZE);
+    u32 length = (u32)end - (u32)start;
+    memory_copy(start, (void*)(0x90000000 + offset), length);
+    
+    // u32 currentAddress = (u32)start;
+    // while (currentAddress < (u32)end) {
+    //     u32 nextPageAddress = (u32)KMM.calculateNextAllignedAddress(currentAddress, PAGE_SIZE);
+    //     if (nextPageAddress == currentAddress) {
+    //         nextPageAddress += PAGE_SIZE;
+    //     }
+    //     u32 length;
+    //     if ((u32)nextPageAddress < (u32)end) {
+    //         length = (u32)nextPageAddress - (u32)currentAddress;
+    //     }
+    //     else {
+    //         length = (u32)end - (u32)currentAddress;
+    //     }
+    //     copySegmentOnSinglePage(oldStructure, newStructure, (void*)currentAddress, length);
+    //     currentAddress += length;
+    // }
+}
+
+void PageTableManager::copySegmentOnSinglePage(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, u32 length) {
+    u32 startPageAddress = (u32)KMM.calculateNextAllignedAddress((u32)start, PAGE_SIZE);
+    if (startPageAddress % (PAGE_SIZE) != 0) {
+        startPageAddress -= PAGE_SIZE;
+    }
+    PageTableEntry *entry = getPageTableEntry(newStructure, (u32)startPageAddress);
+    u32 physicalAddress = pteBaseAddress(*entry);
+    mapPage(oldStructure, 0x90000000, physicalAddress, false);
+    flush_tlb();
+    u32 offset = (u32)start % (PAGE_SIZE);
+    memory_copy(start, (void*)(0x90000000 + offset), length);
+}
+
+
+
+
+
 PagingStructure PageTableManager::getCurrentPagingStructure() {
     return pagingStructure;
 }
@@ -229,8 +319,14 @@ int PageTableManager::mmap(void *virtualAddress, int length) {
 }
 
 void PageTableManager::pageTableSwitch(Process *process) {
+    u32 ebp; u32 esp;
+    asm("\t movl %%esp,%0" : "=r"(esp));
+    asm("\t movl %%ebp,%0" : "=r"(ebp));
+    copySegment(&pagingStructure, process->getPagingStructure(), (void*)esp, (void*)(ebp + 0x60));
+    
     PagingStructure *structure = process->getPagingStructure();
-    write_cr3((u32)structure->pageDirectoryPtr);
+    asm volatile("movl %%eax, %%cr3" ::"a"((u32)structure->pageDirectoryPtr)
+                 : "memory");
     pagingStructure = *structure;
 }
 
@@ -271,6 +367,11 @@ void PageTableManager::preserveKernelMapping(PagingStructure& newStructure,
             *newEntry = *entry;
         }
     }                                            
+}
+
+void PageTableManager::flush_tlb() {
+    u32 cr3 = read_cr3();
+    write_cr3(cr3);
 }
 
 

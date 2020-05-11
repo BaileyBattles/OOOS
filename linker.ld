@@ -25,4 +25,10 @@ SECTIONS
 
     ebss = .;
   }
+
+  .stack ALIGN (4K) : {
+    s_stack = .;
+    . += 32K;
+    e_stack = .;
+  }
 }

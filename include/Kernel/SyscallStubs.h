@@ -10,6 +10,7 @@ int fork();
 int exec(char *buffer);
 int ls();
 int exit();
+int yield();
 
 void theRealGetInput(char *buffer);
 

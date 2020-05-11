@@ -34,3 +34,7 @@ int ls() {
 int exit() {
     return call_syscall(5, nullptr, nullptr);
 }
+
+int yield() {
+    return call_syscall(6, nullptr, nullptr);
+}

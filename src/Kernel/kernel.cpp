@@ -24,6 +24,8 @@ extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
 
 extern "C" unsigned long ebss;
+extern "C" unsigned long e_stack;
+
 extern "C" void jump_usermode();
 
 void stage2(Process *initProcess);
@@ -77,6 +79,14 @@ void kernelLoop() {
 
 
 extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
+    u32 address = (u32)&e_stack;
+    address -= 7304;
+    asm volatile("movl %%eax, %%esp" ::"a"(address)
+                 : "memory");
+    
+    asm volatile("movl %%eax, %%ebp" ::"a"(&e_stack)
+                 : "memory");
+
     clear_screen();
 
     callConstructors();

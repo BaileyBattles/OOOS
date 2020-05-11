@@ -87,10 +87,17 @@ public:
     //this switches the Addressing to the process's paging strucutre
     void pageTableSwitch(Process* process);
 
+    void pageTableSwitchAndJump(Process* process, void (*func)(Process *));
+
     int mmap(void* virtualAddress, int length);
 
     PagingStructure getCurrentPagingStructure();
 
+    void copyMemory(PagingStructure *oldStructure, PagingStructure *newStructure);
+
+    void copySegment(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, void* end);
+
+    void copySegmentOnSinglePage(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, u32 length);
 private:
     void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
     PageTableManager(){pagingInitialized = false;}
@@ -102,6 +109,7 @@ private:
     u32 read_cr3();
     u32 read_cr2();
     u32 read_cr0();
+    void flush_tlb();
 
     PagingStructure pagingStructure;
     u32 setContinuousPageTable(PageTable &pageTable, u32 baseAddress);

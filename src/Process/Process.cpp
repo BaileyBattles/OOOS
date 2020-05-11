@@ -27,16 +27,35 @@ Process Process::createChildProcess(bool user) {
     PageTableManager::the().pageTableSwitch(this);
 
     
-    pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
+    childProcess.pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     childProcess.isUserMode = user;
     childProcess.socket = this->socket;
     return childProcess;
 }
 
-void Process::fork() {
+int Process::fork() {
     Process newProcess = createChildProcess(true);
+    pcb.eip = 0;
     Scheduler::the().scheduleProcess(&newProcess);
     newProcess.pcb.eip = get_eip();
+
+    PageTableManager::the().copyMemory(this->getPagingStructure(), 
+                            newProcess.getPagingStructure());
+  
+
+    if (pcb.eip == 0) {
+        asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
+        asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
+        return 1;
+    }
+    else {
+        //this == newProcess so the regs we want are in pcb
+        asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
+            : "memory");
+        asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
+            : "memory");
+        return 0;
+    }
 }
 
 void Process::connectToKeyboard(Keyboard *keyboard) {
@@ -45,12 +64,13 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 }
 
 void Process::run() {
+
     PageTableManager::the().pageTableSwitch(this);
 
     // if (isUserMode) {
     //     enterUserMode(pcb.eip, parent->pcb);
     // }
-    // else {
+    // else {  
         ((void (*)(Process*))pcb.eip)(this);
     //}
 }

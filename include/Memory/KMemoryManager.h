@@ -15,6 +15,7 @@
 
 #define KMM KMemoryManager::the()
 
+
 class KMemoryManager{
 public:
     static KMemoryManager& the()
@@ -31,6 +32,8 @@ public:
     int mallocKernelPages(); //returns the number of kernel pages
 
     static void *calculateNextAllignedAddress(u32 address, u32 pageSize);
+
+    u32 endOfKernelToCopy();
 
 private:
     KMemoryManager(){};
