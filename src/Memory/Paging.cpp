@@ -314,7 +314,7 @@ void PageTableManager::pageTableSwitch(Process *process) {
     u32 *ebp; u32 esp;
     asm("\t movl %%esp,%0" : "=r"(esp));
     asm("\t movl %%ebp,%0" : "=r"(ebp));
-    copySegment(&pagingStructure, process->getPagingStructure(), (void*)esp, (void*)(*ebp));
+    copySegment(&pagingStructure, process->getPagingStructure(), (void*)esp, (void*)(*ebp + 0x12));
     
     PagingStructure *structure = process->getPagingStructure();
     asm volatile("movl %%eax, %%cr3" ::"a"((u32)structure->pageDirectoryPtr)

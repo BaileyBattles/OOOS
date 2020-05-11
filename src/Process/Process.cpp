@@ -50,7 +50,7 @@ int Process::fork() {
         //this == newProcess so the regs we want are in pcb
         asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
-        asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
+        asm volatile("movl %%eax, %%ebp" ::"a"(0x0011ed74)
             : "memory");
         return 0;
     }
