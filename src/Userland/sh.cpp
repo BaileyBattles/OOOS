@@ -16,10 +16,10 @@ int main() {
         if (results[0] == '\n') {
             int x = fork();
             if (x == 0) {
-                printf("Child");
+                printf("Child\n");
             }
             else {
-                printf("Parent");
+                printf("Parent\n");
                 yield();
             }
             made = true;
