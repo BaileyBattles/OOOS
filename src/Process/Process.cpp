@@ -42,11 +42,12 @@ Process Process::createChildProcess(bool user) {
 
 int Process::fork() {
     Process newProcess = createChildProcess(true);
-    pcb.eip = 0;
+    pcb.forkFlag = 0;
+    newProcess.pcb.forkFlag = 0x10987;
     Scheduler::the().scheduleProcess(&newProcess);
     newProcess.pcb.eip = get_eip();
 
-    if (pcb.eip == 0) {
+    if (pcb.forkFlag == 0) {
         asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
         PageTableManager::the().copyMemory(this->getPagingStructure(), 

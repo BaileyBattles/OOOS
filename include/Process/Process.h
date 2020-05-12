@@ -17,6 +17,7 @@ struct PCB {
 	u32 eip;
 	u32 esp;
 	u32 ebp;
+	u32 forkFlag;
 };
 
 class Keyboard;
