@@ -39,12 +39,13 @@ public:
 	int fork();
 
 private:
+	static int nextPID;
+	static int getNextPID();
     char *path;
 	ELFLoader elfLoader;
 	PCB pcb;
 	Process *parent;
-	bool isUserMode;
-    
+	bool isUserMode;    
 	
 	IPCSocket socket;
 	static void enterUserMode(u32 entryAddress, PCB &pcb);
@@ -53,6 +54,7 @@ private:
 	void storeRegisters(PCB &processControlBlock);
 	void storeInitRegisters(PCB &processControlBlock);
 
+	int pid;
 
 };
 

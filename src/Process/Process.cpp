@@ -9,6 +9,12 @@
 extern "C" void enteruser(u32 entryPoint);
 extern "C" u32 get_eip();
 
+int Process::nextPID = 1;
+int Process::getNextPID() {
+    nextPID++;
+    return nextPID - 1;
+}
+
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
     memory_set(initProcess, '\0', sizeof(Process));
@@ -21,7 +27,7 @@ Process Process::createInitProcess(void (*func)(Process *)) {
 Process Process::createChildProcess(bool user) {
     Process childProcess;
     childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
-    
+    childProcess.pid = getNextPID();
     PageTableManager::the().pageTableSwitch(&childProcess);
     PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
     PageTableManager::the().pageTableSwitch(this);
