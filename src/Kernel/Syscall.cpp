@@ -51,5 +51,5 @@ int _exit(char* buffer, char *result) {
 }
 
 int _yield(char* buffer, char* retsult) {
-    Scheduler::the().runNext();
+    Scheduler::the().yield();
 }

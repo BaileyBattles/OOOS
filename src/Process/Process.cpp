@@ -40,6 +40,10 @@ Process Process::createChildProcess(bool user) {
     return childProcess;
 }
 
+int Process::getPID() {
+    return pid;
+}
+
 int Process::fork() {
     Process newProcess = createChildProcess(true);
     pcb.forkFlag = 0;
@@ -50,6 +54,11 @@ int Process::fork() {
     if (pcb.forkFlag == 0) {
         asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
+        pcb.eip = get_eip();
+        asm volatile("movl %%eax, %%esp" ::"a"(newProcess.pcb.esp)
+            : "memory");
+        asm volatile("movl %%eax, %%ebp" ::"a"(newProcess.pcb.ebp)
+            : "memory");
         PageTableManager::the().copyMemory(this->getPagingStructure(), 
                     newProcess.getPagingStructure());
         return 1;

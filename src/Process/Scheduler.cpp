@@ -1,6 +1,8 @@
 #include "Memory/KMemoryManager.h"
 #include "Process/Scheduler.h"
 
+extern "C" u32 get_eip();
+
 Scheduler::Scheduler() {
     numProcesses = 0;
 }
@@ -48,5 +50,11 @@ void Scheduler::removeProcess(Process *process) {
 }
 
 void Scheduler::yield() {
-    
+    int currentPID = currentProcess->getPID();
+    u32 ebp; u32 esp;
+    asm("\t movl %%esp,%0" : "=r"(currentProcess->pcb.esp));
+    asm("\t movl %%ebp,%0" : "=r"(currentProcess->pcb.ebp));
+    currentProcess->pcb.eip = get_eip();
+    if (currentProcess->getPID() == currentPID)
+        runNext();
 }

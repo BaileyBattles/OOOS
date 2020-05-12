@@ -34,17 +34,20 @@ public:
 	void connectToKeyboard(Keyboard *keyboard);
 	void readFromIPC();
 	IPCSocket *theSocket();
+	int getPID();
+
+
 
 	void exit();
 	void run();
 	int fork();
 
+	PCB pcb;
 private:
 	static int nextPID;
 	static int getNextPID();
     char *path;
 	ELFLoader elfLoader;
-	PCB pcb;
 	Process *parent;
 	bool isUserMode;
 	int pid;
