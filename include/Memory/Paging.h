@@ -98,6 +98,8 @@ public:
     void copySegment(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, void* end);
 
     void copySegmentOnSinglePage(PagingStructure *oldStructure, PagingStructure *newStructure, void* start, u32 length);
+
+    u32 getPhysicalAddress(u32 virtualAddress);
 private:
     void mapPage(PagingStructure *structure, u32 virtualAddress, u32 physicalAddress, bool user);
     PageTableManager(){pagingInitialized = false;}

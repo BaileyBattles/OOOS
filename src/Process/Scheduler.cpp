@@ -2,7 +2,6 @@
 #include "Process/Scheduler.h"
 
 Scheduler::Scheduler() {
-    processQueue = (Process**)KMM.kmalloc(sizeof(Process*)*INITIAL_PROCESS_QUEUE_SIZE);
     numProcesses = 0;
 }
 
@@ -16,6 +15,7 @@ Process* Scheduler::runningProcess() {
 }
 
 void Scheduler::runNext() {
+    // u32 physical = PageTableManager::the().getPhysicalAddress((u32)&Scheduler::the());
     Process *theProcess = processQueue[0];
     for (int i = 0; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];

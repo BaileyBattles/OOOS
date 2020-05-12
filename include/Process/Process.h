@@ -45,7 +45,9 @@ private:
 	ELFLoader elfLoader;
 	PCB pcb;
 	Process *parent;
-	bool isUserMode;    
+	bool isUserMode;
+	int pid;
+
 	
 	IPCSocket socket;
 	static void enterUserMode(u32 entryAddress, PCB &pcb);
@@ -54,7 +56,6 @@ private:
 	void storeRegisters(PCB &processControlBlock);
 	void storeInitRegisters(PCB &processControlBlock);
 
-	int pid;
 
 };
 

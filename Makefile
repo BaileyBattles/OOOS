@@ -82,5 +82,6 @@ clean:
 		   src/FS/*.o \
 		   src/Lib/*.o \
 		   src/Lib/stdlib/*.o \
+		   src/Process/*.o \
 		   src/Userland/*.o \
 		   iso

@@ -18,6 +18,7 @@ int Process::getNextPID() {
 Process Process::createInitProcess(void (*func)(Process *)) {
     Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
     memory_set(initProcess, '\0', sizeof(Process));
+    initProcess->pid = 0;
     initProcess->pcb.eip = (u32)func;
     initProcess->pagingStructure = PageTableManager::the().getCurrentPagingStructure();
     Scheduler::the().scheduleProcess(initProcess);
@@ -70,7 +71,6 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 void Process::run() {
 
     PageTableManager::the().pageTableSwitch(this);
-
     // if (isUserMode) {
     //     enterUserMode(pcb.eip, parent->pcb);
     // }

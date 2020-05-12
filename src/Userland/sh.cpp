@@ -17,6 +17,7 @@ int main() {
             int x = fork();
             if (x == 0) {
                 printf("Child\n");
+                yield();
             }
             else {
                 printf("Parent\n");

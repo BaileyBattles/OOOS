@@ -246,6 +246,11 @@ void PageTableManager::copySegmentOnSinglePage(PagingStructure *oldStructure, Pa
     memory_copy(start, (void*)(0x90000000 + offset), length);
 }
 
+u32 PageTableManager::getPhysicalAddress(u32 virtualAddress) {
+    PageTableEntry *entry = getPageTableEntry(&pagingStructure, virtualAddress);
+    return pteBaseAddress(*entry);
+}
+
 PagingStructure PageTableManager::getCurrentPagingStructure() {
     return pagingStructure;
 }

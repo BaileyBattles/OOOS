@@ -3,7 +3,7 @@
 
 #include "Process/Process.h"
 
-#define INITIAL_PROCESS_QUEUE_SIZE 20
+#define MAX_NUM_PROCESSES 256
 
 class Scheduler {
 public:
@@ -22,7 +22,7 @@ public:
 private:
     Scheduler();
 
-    Process** processQueue;
+    Process* processQueue[MAX_NUM_PROCESSES];
     Process* currentProcess;
     int numProcesses;
 };
