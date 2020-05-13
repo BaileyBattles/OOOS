@@ -61,11 +61,13 @@ void Scheduler::removeProcess(Process *process) {
 }
 
 void Scheduler::yield() {
-    // runNext();
-    currentProcess->pcb.eip = get_eip();
-    if (currentProcess->getPID()){
+    bool alreadyYielded = false;
+    u32 eip = get_eip();
+    if (eip != 0x10987){
+        currentProcess->pcb.eip = eip;
         asm("\t movl %%esp,%0" : "=r"(currentProcess->pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(currentProcess->pcb.ebp));
+        alreadyYielded = true;
         runNext();
     }
 }

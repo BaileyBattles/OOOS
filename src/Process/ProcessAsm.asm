@@ -29,7 +29,10 @@ addToStack:
 
 global jumpToCode
 jumpToCode:
-    mov ebx, [esp + 4]
+    cli
+    mov edx, [esp + 4]
     mov esp, [esp + 8]
     mov ebp, ecx
-    jmp ebx
+    mov eax, 0x10987
+    sti
+    jmp edx
