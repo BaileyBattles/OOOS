@@ -8,6 +8,7 @@
 
 extern "C" void enteruser(u32 entryPoint);
 extern "C" u32 get_eip();
+extern "C" void jumpToCode(u32 eip, u32 esp, u32 ebp);
 
 int Process::nextPID = 1;
 int Process::getNextPID() {
@@ -15,28 +16,35 @@ int Process::getNextPID() {
     return nextPID - 1;
 }
 
+Process processes[MAX_NUM_PROCESSES];
+
 Process Process::createInitProcess(void (*func)(Process *)) {
-    Process *initProcess = (Process*)KMM.kmalloc(sizeof(Process));
+    Process *initProcess = &processes[0];
     memory_set(initProcess, '\0', sizeof(Process));
     initProcess->pid = 0;
+    initProcess->pcb.esp = 0;
+    initProcess->pcb.ebp = 0;
     initProcess->pcb.eip = (u32)func;
     initProcess->pagingStructure = PageTableManager::the().getCurrentPagingStructure();
     Scheduler::the().scheduleProcess(initProcess);
     //func(initProcess);
 }
 
-Process Process::createChildProcess(bool user) {
-    Process childProcess;
-    childProcess.pagingStructure = PageTableManager::the().initializeProcessPageTable();
-    childProcess.pid = getNextPID();
-    PageTableManager::the().pageTableSwitch(&childProcess);
+Process *Process::createChildProcess(bool user) {
+    int newPid = getNextPID();
+    Process *childProcess = &processes[newPid];
+    childProcess->pagingStructure = PageTableManager::the().initializeProcessPageTable();
+    childProcess->pid = newPid;
+    PageTableManager::the().pageTableSwitch(childProcess);
     PageTableManager::the().mmap((void*)USERSPACE_START_VIRTUAL, TOTAL_MEMORY / 8);
     PageTableManager::the().pageTableSwitch(this);
 
-    
-    childProcess.pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
-    childProcess.isUserMode = user;
-    childProcess.socket = this->socket;
+    if (isUserMode) {
+        childProcess->pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
+        childProcess->pcb.ebp = USERSPACE_START_VIRTUAL + 0x1000;
+    }
+    childProcess->isUserMode = user;
+    childProcess->socket = this->socket;
     return childProcess;
 }
 
@@ -45,32 +53,27 @@ int Process::getPID() {
 }
 
 int Process::fork() {
-    Process newProcess = createChildProcess(true);
+    Process *newProcess = createChildProcess(true);
     pcb.forkFlag = 0;
-    newProcess.pcb.forkFlag = 0x10987;
-    Scheduler::the().scheduleProcess(&newProcess);
-    newProcess.pcb.eip = get_eip();
+    newProcess->pcb.forkFlag = 0x10987;
+    Scheduler::the().scheduleProcess(newProcess);
+    newProcess->pcb.eip = get_eip();
 
-    if (pcb.forkFlag == 0) {
+    if (newProcess != Scheduler::the().runningProcess()) {
         //parent
-        asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
-        asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
-        pcb.eip = get_eip();
-        asm volatile("movl %%eax, %%esp" ::"a"(newProcess.pcb.esp)
-            : "memory");
-        asm volatile("movl %%eax, %%ebp" ::"a"(newProcess.pcb.ebp)
-            : "memory");
+        asm("\t movl %%esp,%0" : "=r"(newProcess->pcb.esp));
+        asm("\t movl %%ebp,%0" : "=r"(newProcess->pcb.ebp));
         PageTableManager::the().copyMemory(this->getPagingStructure(), 
-                    newProcess.getPagingStructure());
-        return newProcess.getPID();
+                    newProcess->getPagingStructure());
+        return newProcess->getPID();
     }
     else {
         //child
         //this == newProcess so the regs we want are in pcb
-        asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
-            : "memory");
-        asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
-            : "memory");
+        // asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
+        //     : "memory");
+        // asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
+        //     : "memory");
         return 0;
     }
 }
@@ -81,14 +84,23 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 }
 
 void Process::run() {
-
     PageTableManager::the().pageTableSwitch(this);
-    // if (isUserMode) {
-    //     enterUserMode(pcb.eip, parent->pcb);
-    // }
-    // else {  
+
+    if (pcb.esp == 0 && pcb.ebp == 0) 
         ((void (*)(Process*))pcb.eip)(this);
-    //}
+
+
+    if (pcb.eip > USERSPACE_START_VIRTUAL) {
+        enterUserMode(pcb.eip, pcb);
+    }
+    else {  
+        //((void (*)(Process*))pcb.eip)(this);
+        u32 val;   
+        __asm__("movl %%esp,%0" : "=r"(val));
+        setTSSStack(val);
+        jumpToCode(pcb.eip, pcb.esp, pcb.ebp);
+
+    }
 }
 
 IPCSocket *Process::theSocket() {
@@ -140,14 +152,18 @@ void Process::storeRegisters(PCB &processControlBlock) {
 }
 
 void Process::enterUserMode(u32 entryAddress, PCB &pcb) {
-    u32 val;
-    // __asm__("movl %%ebp,%0" : "=r"(val));
-    // pcb.eip = *(u32*)(val + 4);
-    // __asm__("movl %%ebp,%0" : "=r"(pcb.esp));
-    
+    u32 val;   
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
-    asm volatile("movl %%eax, %%esp" ::"a"(USERSPACE_START_VIRTUAL + 0x1000)
+
+    //need to move entery address to register since we move the stack
+    asm volatile("movl %%eax, %%ebx" ::"a"(entryAddress)
                 : "memory");
+    asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
+                : "memory");
+    asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
+                : "memory");
+    __asm__("movl %%ebx,%0" : "=r"(entryAddress));
+
     enteruser(entryAddress);
 }

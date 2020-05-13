@@ -27,7 +27,7 @@ public:
 	friend class IPCSocket;
 
 	static Process createInitProcess(void (*func)(Process *));
-	Process createChildProcess(bool user);
+	Process *createChildProcess(bool user);
     void exec(const char path[]);
 
     PagingStructure *getPagingStructure();

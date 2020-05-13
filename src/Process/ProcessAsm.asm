@@ -26,3 +26,10 @@ enteruser:
 
 addToStack:
     add esp, 4
+
+global jumpToCode
+jumpToCode:
+    mov ebx, [esp + 4]
+    mov esp, [esp + 8]
+    mov ebp, ecx
+    jmp ebx
