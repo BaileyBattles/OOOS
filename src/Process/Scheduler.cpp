@@ -31,7 +31,7 @@ void Scheduler::removeProcess(Process *process) {
     int i;  
     int processNumber = -1;
     for (i = 0; i < numProcesses; i++) {
-        if (process == processQueue[i])
+        if (process->getPID() == processQueue[i]->getPID())
             processNumber = i;
     }
 

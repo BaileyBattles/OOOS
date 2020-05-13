@@ -52,6 +52,7 @@ int Process::fork() {
     newProcess.pcb.eip = get_eip();
 
     if (pcb.forkFlag == 0) {
+        //parent
         asm("\t movl %%esp,%0" : "=r"(newProcess.pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(newProcess.pcb.ebp));
         pcb.eip = get_eip();
@@ -61,9 +62,10 @@ int Process::fork() {
             : "memory");
         PageTableManager::the().copyMemory(this->getPagingStructure(), 
                     newProcess.getPagingStructure());
-        return 1;
+        return newProcess.getPID();
     }
     else {
+        //child
         //this == newProcess so the regs we want are in pcb
         asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
