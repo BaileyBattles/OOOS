@@ -17,18 +17,6 @@ Process* Scheduler::runningProcess() {
 }
 
 void Scheduler::runNext() {
-    // u32 physical = PageTableManager::the().getPhysicalAddress((u32)&Scheduler::the());
-    // u32 esp; u32 ebp;
-    // asm("\t movl %%esp,%0" : "=r"(esp));
-    // asm("\t movl %%ebp,%0" : "=r"(ebp)); 
-    
-    // int x = 34;
-    // u32 eip = get_eip();
-
-    // currentProcess->pcb.ebp = ebp;
-    // currentProcess->pcb.esp = esp;
-    // currentProcess->pcb.eip = eip;
-
     Process *theProcess = processQueue[0];
     for (int i = 0; i < numProcesses - 1; i++) {
         processQueue[i] = processQueue[i + 1];
@@ -54,10 +42,7 @@ void Scheduler::removeProcess(Process *process) {
     }
     numProcesses--;
 
-    if (processNumber == 0) {
-        currentProcess = processQueue[0];
-        currentProcess->run();
-    }
+    runNext();
 }
 
 void Scheduler::yield() {

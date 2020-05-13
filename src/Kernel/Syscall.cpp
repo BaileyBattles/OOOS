@@ -27,10 +27,7 @@ int _getInput(char* buffer, char* result) {
 
 int _fork(char* buffer, char *result) {
     int val = Scheduler::the().runningProcess()->fork();
-    //Scheduler::the().runNext();
     return val;
-    //Scheduler::the().scheduleProcess(&newProcess);
-    // Process::processQueue[0] = newProcess;
 }
 
 int _exec(char* buffer, char *result) {
