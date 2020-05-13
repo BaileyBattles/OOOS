@@ -42,12 +42,7 @@ int _ls(char* buffer, char *result) {
 }
 
 int _exit(char* buffer, char *result) {
-    // asm volatile("movl %%eax, %%esp" ::"a"(0x10be68)
-    //             : "memory");
-    // ((void (*)(void))0x10562d)();
-
-    while (true)
-        ;
+    Scheduler::the().runningProcess()->exit();
 }
 
 int _yield(char* buffer, char* retsult) {
