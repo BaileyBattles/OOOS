@@ -308,6 +308,8 @@ void PageTableManager::pageTableSwitch(Process *process) {
 void PageTableManager::handleInterrupt(registers_t r) {
     u32 val = read_cr2();
     kprint("Page Fault\n");
+    char buffer[10];
+    kprint(int_to_ascii(val, buffer));
 }
 
 void PageTableManager::initializeKernelMapping(PagingStructure& structure) {

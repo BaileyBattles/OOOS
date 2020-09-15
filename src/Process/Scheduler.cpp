@@ -1,7 +1,8 @@
 #include "Memory/KMemoryManager.h"
 #include "Process/Scheduler.h"
+#include "Drivers/Screen.h"
 
-extern "C" u32 get_eip();
+extern "C" u32 read_eip();
 
 Scheduler::Scheduler() {
     numProcesses = 0;
@@ -27,7 +28,7 @@ void Scheduler::runNext() {
 }
 
 void Scheduler::removeProcess(Process *process) {
-    int i;  
+    int i;
     int processNumber = -1;
     for (i = 0; i < numProcesses; i++) {
         if (process->getPID() == processQueue[i]->getPID())
@@ -41,18 +42,17 @@ void Scheduler::removeProcess(Process *process) {
         processQueue[i] = processQueue[i + 1];
     }
     numProcesses--;
-
-    runNext();
 }
 
 void Scheduler::yield() {
-    bool alreadyYielded = false;
-    u32 eip = get_eip();
-    if (eip != 0x10987){
-        currentProcess->pcb.eip = eip;
+    int x = 42;
+    currentProcess->pcb.eip = read_eip();
+    if (currentProcess->pcb.yieldFlag == 0) {
+        currentProcess->pcb.yieldFlag = 1;
         asm("\t movl %%esp,%0" : "=r"(currentProcess->pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(currentProcess->pcb.ebp));
-        alreadyYielded = true;
         runNext();
     }
+    currentProcess->pcb.yieldFlag = 0;
+    currentProcess->reloadShell();
 }

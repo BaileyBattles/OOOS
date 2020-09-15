@@ -3,6 +3,11 @@ get_eip:
     mov eax, [esp]
     ret
 
+global read_eip
+read_eip:
+  pop eax
+  jmp eax
+
 GLOBAL enteruser ;you may need to remove this _ to work right.. 
 EXTERN kernelLoop
 enteruser:

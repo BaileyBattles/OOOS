@@ -119,14 +119,14 @@ extern "C" void kernelMain(multiboot_header_t* multibootHeader) {
 }
 
 void stage2(Process *initProcess) {
-    Process *childProcess = initProcess->createChildProcess(true);
-    childProcess->connectToKeyboard(&keyboard); 
-    Scheduler::the().scheduleProcess(childProcess);
-    childProcess->exec("/BIN/SH");
-    u32 val;
-    initProcess->exit();;
+    int pid = initProcess->fork();
+    if (pid == 0) {
+        Scheduler::the().runningProcess()->connectToKeyboard(&keyboard);
+        Scheduler::the().runningProcess()->exec("/BIN/SH");
+    }
+    initProcess->exit();
+    Scheduler::the().runNext();
     kprint("here");
 
     kernelLoop();
 }
-

@@ -8,6 +8,7 @@
 
 extern "C" void enteruser(u32 entryPoint);
 extern "C" u32 get_eip();
+extern "C" u32 read_eip();
 extern "C" void jumpToCode(u32 eip, u32 esp, u32 ebp);
 
 int Process::nextPID = 1;
@@ -57,23 +58,20 @@ int Process::fork() {
     pcb.forkFlag = 0;
     newProcess->pcb.forkFlag = 0x10987;
     Scheduler::the().scheduleProcess(newProcess);
-    newProcess->pcb.eip = get_eip();
+
+    //where the magic happends
+    newProcess->pcb.eip = read_eip();
 
     if (newProcess != Scheduler::the().runningProcess()) {
         //parent
         asm("\t movl %%esp,%0" : "=r"(newProcess->pcb.esp));
         asm("\t movl %%ebp,%0" : "=r"(newProcess->pcb.ebp));
-        PageTableManager::the().copyMemory(this->getPagingStructure(), 
+        PageTableManager::the().copyMemory(this->getPagingStructure(),
                     newProcess->getPagingStructure());
         return newProcess->getPID();
     }
     else {
         //child
-        //this == newProcess so the regs we want are in pcb
-        // asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
-        //     : "memory");
-        // asm volatile("movl %%eax, %%ebp" ::"a"(pcb.ebp)
-        //     : "memory");
         return 0;
     }
 }
@@ -86,16 +84,16 @@ void Process::connectToKeyboard(Keyboard *keyboard) {
 void Process::run() {
     PageTableManager::the().pageTableSwitch(this);
 
-    if (pcb.esp == 0 && pcb.ebp == 0) 
+    if (pcb.esp == 0 && pcb.ebp == 0)
         ((void (*)(Process*))pcb.eip)(this);
 
 
     if (pcb.eip > USERSPACE_START_VIRTUAL) {
         enterUserMode(pcb.eip, pcb);
     }
-    else {  
+    else {
         //((void (*)(Process*))pcb.eip)(this);
-        u32 val;   
+        u32 val;
         __asm__("movl %%esp,%0" : "=r"(val));
         setTSSStack(val);
         jumpToCode(pcb.eip, pcb.esp, pcb.ebp);
@@ -119,7 +117,7 @@ void Process::readFromIPC() {
         }
     }
 }
- 
+
 void Process::exit() {
     Scheduler::the().removeProcess(this);
 }
@@ -128,20 +126,23 @@ PagingStructure* Process::getPagingStructure() {
     return &pagingStructure;
 }
 
+void Process::reloadShell() {
+    elfLoader.load("/BIN/SH");
+}
+
 void Process::exec(const char path[]) {
-    path = "/BIN/SH";
     PCB oldPcb;
     storeRegisters(oldPcb);
     char *copiedPath = (char*)KMM.kmalloc(strlen(path) + 1);
     strcpy(path, copiedPath);
-    PageTableManager::the().pageTableSwitch(this);
-    
+    //PageTableManager::the().pageTableSwitch(this);
+
     ELFInfo elfInfo = elfLoader.load(copiedPath);
 
     pcb.esp = USERSPACE_START_VIRTUAL + 0x1000;
     pcb.eip = elfInfo.entryAddress;
 
-    PageTableManager::the().pageTableSwitch(Scheduler::the().runningProcess());
+    //PageTableManager::the().pageTableSwitch(Scheduler::the().runningProcess());
     asm volatile("movl %%eax, %%esp" ::"a"(pcb.esp)
             : "memory");
 }
@@ -152,7 +153,7 @@ void Process::storeRegisters(PCB &processControlBlock) {
 }
 
 void Process::enterUserMode(u32 entryAddress, PCB &pcb) {
-    u32 val;   
+    u32 val;
     __asm__("movl %%esp,%0" : "=r"(val));
     setTSSStack(val);
 

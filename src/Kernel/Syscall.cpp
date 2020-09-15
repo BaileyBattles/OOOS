@@ -5,6 +5,7 @@
 #include "Process/Scheduler.h"
 #include "Util/String.h"
 #include "Kernel/Syscall.h"
+#include "Process/ELFLoader.h"
 
 extern "C"
 int handle_syscall(int num, void *args, void *results) {
@@ -31,7 +32,8 @@ int _fork(char* buffer, char *result) {
 }
 
 int _exec(char* buffer, char *result) {
-    // Process::processQueue[0].exec(buffer);
+    Scheduler::the().runningProcess()->exec("/BIN/LS");
+    Scheduler::the().runningProcess()->run();
 }
 
 int _ls(char* buffer, char *result) {
@@ -40,6 +42,7 @@ int _ls(char* buffer, char *result) {
 
 int _exit(char* buffer, char *result) {
     Scheduler::the().runningProcess()->exit();
+    Scheduler::the().runNext();
 }
 
 int _yield(char* buffer, char* retsult) {

@@ -18,6 +18,7 @@ struct PCB {
 	u32 esp;
 	u32 ebp;
 	u32 forkFlag;
+	u32 yieldFlag;
 };
 
 class Keyboard;
@@ -41,6 +42,8 @@ public:
 	void exit();
 	void run();
 	int fork();
+
+	void reloadShell();
 
 	PCB pcb;
 private:

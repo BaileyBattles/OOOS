@@ -17,11 +17,12 @@ int main() {
             int x = fork();
             if (x == 0) {
                 printf("Child\n");
-                exit();
+                exec("/BIN/LS");
             }
             else {
                 printf("Parent\n");
                 yield();
+                printf("back from yield\n");
             }
             made = true;
             printf("> ");

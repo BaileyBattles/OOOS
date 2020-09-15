@@ -2,4 +2,6 @@
 
 int main() {
     ls();
+    exit();
+    return 0;
 }

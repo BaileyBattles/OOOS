@@ -19,8 +19,9 @@ OBJ = ${C_SOURCES:.cpp=.o    \
 		src/Process/ProcessAsm.o} 
 
 # Change this if your cross-compiler is somewhere else
-CC = i686-elf-gcc
+CC = /home/bbattles/osdev/opt/cross/bin/i386-elf-gcc
 GDB = gdb
+LD = /home/bbattles/osdev/opt/cross/bin/i386-elf-ld
 # -g: Use debugging symbols in gcc
 CFLAGS = -g -Iinclude -fno-rtti -fno-exceptions -ffreestanding -fno-builtin -Wall -nostdlib -fno-threadsafe-statics
 
@@ -54,7 +55,7 @@ userland:
 
 # Used for debugging purposes
 kernel.elf: src/Boot/Entry.o ${OBJ}
-	i686-elf-ld -o $@ -T linker.ld $^ 
+	${LD} -o $@ -T linker.ld $^ 
 
 # Open the connection to qemu and load our kernel-object file with symbols
 debug: kernel.elf
